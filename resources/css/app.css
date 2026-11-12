@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    html {
+        @apply bg-slate-50 font-sans text-body text-slate-900 antialiased;
+    }
+
+    [x-cloak] {
+        display: none !important;
+    }
+}
