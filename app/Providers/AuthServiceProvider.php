@@ -2,25 +2,29 @@
 
 namespace App\Providers;
 
-// use Illuminate\Support\Facades\Gate;
+use App\Support\CurrentOrganization;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
+use Illuminate\Support\Facades\Gate;
 
 class AuthServiceProvider extends ServiceProvider
 {
     /**
-     * The model to policy mappings for the application.
-     *
      * @var array<class-string, class-string>
      */
     protected $policies = [
         //
     ];
 
-    /**
-     * Register any authentication / authorization services.
-     */
     public function boot(): void
     {
-        //
+        // Permisos del esquema (permissions.module + permissions.action), ej. "pacientes.crear".
+        // Se resuelven contra el rol del miembro en la organización activa.
+        Gate::before(function ($user, string $ability) {
+            if (preg_match('/^[a-z_]+\.[a-z_]+$/', $ability)) {
+                return app(CurrentOrganization::class)->can($ability);
+            }
+
+            return null;
+        });
     }
 }
