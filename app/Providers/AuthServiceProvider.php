@@ -2,10 +2,13 @@
 
 namespace App\Providers;
 
-use App\Support\CurrentOrganization;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
-use Illuminate\Support\Facades\Gate;
 
+/**
+ * Por ahora NO hay roles ni permisos: cualquier usuario con sesión y acceso a la
+ * clínica puede usar todos los módulos. Los permisos se implementan en el
+ * módulo 2 (Gestión de roles) con las tablas roles / permissions / role_permissions.
+ */
 class AuthServiceProvider extends ServiceProvider
 {
     /**
@@ -17,14 +20,6 @@ class AuthServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // Permisos del esquema (permissions.module + permissions.action), ej. "pacientes.crear".
-        // Se resuelven contra el rol del miembro en la organización activa.
-        Gate::before(function ($user, string $ability) {
-            if (preg_match('/^[a-z_]+\.[a-z_]+$/', $ability)) {
-                return app(CurrentOrganization::class)->can($ability);
-            }
-
-            return null;
-        });
+        //
     }
 }

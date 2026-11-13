@@ -33,7 +33,6 @@
             </div>
         </div>
         <div class="flex shrink-0 items-center gap-2" x-data>
-            @can('pacientes.desactivar')
                 @if ($patient->isActive())
                     {{-- Los @js van en una etiqueta HTML normal: dentro de un <x-…> rompen el parser de Blade --}}
                     <span x-on:click="$dispatch('open-modal', { name: 'deactivate-patient', label: @js($patient->full_name.' ('.$patient->folio.')'), action: @js(route('patients.deactivate', $patient)) })">
@@ -46,12 +45,9 @@
                         <x-ui.button type="submit" variant="secondary">Reactivar</x-ui.button>
                     </form>
                 @endif
-            @endcan
-            @can('pacientes.editar')
                 <span x-on:click="$dispatch('open-modal', { name: 'edit-patient', patient: @js($patient->toFormArray()), action: @js(route('patients.update', $patient)) })">
                     <x-ui.button variant="secondary">Editar datos</x-ui.button>
                 </span>
-            @endcan
         </div>
     </x-ui.card>
 

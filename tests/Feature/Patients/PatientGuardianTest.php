@@ -17,7 +17,7 @@ class PatientGuardianTest extends TestCase
 
     public function test_adds_contacts_and_first_one_is_primary(): void
     {
-        $member = $this->memberWith(['ver', 'editar']);
+        $member = $this->member();
         $patient = $this->createPatient($member);
 
         $this->actingAsMember($member)->post("/pacientes/{$patient->id}/contactos", $this->payload())
@@ -38,7 +38,7 @@ class PatientGuardianTest extends TestCase
 
     public function test_shows_empty_state_without_contacts(): void
     {
-        $member = $this->memberWith(['ver']);
+        $member = $this->member();
         $patient = $this->createPatient($member);
 
         $this->actingAsMember($member)->get("/pacientes/{$patient->id}")->assertSee('No hay contactos registrados');
@@ -46,7 +46,7 @@ class PatientGuardianTest extends TestCase
 
     public function test_validates_contact_fields(): void
     {
-        $member = $this->memberWith(['ver', 'editar']);
+        $member = $this->member();
         $patient = $this->createPatient($member);
 
         $this->actingAsMember($member)
@@ -56,7 +56,7 @@ class PatientGuardianTest extends TestCase
 
     public function test_updates_and_deletes_contact_promoting_a_new_primary(): void
     {
-        $member = $this->memberWith(['ver', 'editar']);
+        $member = $this->member();
         $patient = $this->createPatient($member);
         $this->actingAsMember($member)->post("/pacientes/{$patient->id}/contactos", $this->payload());
         $this->actingAsMember($member)->post("/pacientes/{$patient->id}/contactos", $this->payload(['full_name' => 'otro contacto', 'relationship' => 'otro']));
@@ -77,7 +77,7 @@ class PatientGuardianTest extends TestCase
 
     public function test_contact_must_belong_to_the_patient_in_the_url(): void
     {
-        $member = $this->memberWith(['ver', 'editar']);
+        $member = $this->member();
         $patientA = $this->createPatient($member);
         $patientB = $this->createPatient($member);
         $this->actingAsMember($member)->post("/pacientes/{$patientA->id}/contactos", $this->payload());
@@ -85,13 +85,5 @@ class PatientGuardianTest extends TestCase
 
         $this->actingAsMember($member)->delete("/pacientes/{$patientB->id}/contactos/{$guardian->id}")->assertNotFound();
         $this->assertNotNull($guardian->fresh());
-    }
-
-    public function test_viewer_cannot_manage_contacts(): void
-    {
-        $member = $this->memberWith(['ver']);
-        $patient = $this->createPatient($member);
-
-        $this->actingAsMember($member)->post("/pacientes/{$patient->id}/contactos", $this->payload())->assertForbidden();
     }
 }

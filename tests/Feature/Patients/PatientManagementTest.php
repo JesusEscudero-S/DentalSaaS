@@ -15,8 +15,6 @@ class PatientManagementTest extends TestCase
 {
     use RefreshDatabase;
 
-    private const ALL = ['ver', 'crear', 'editar', 'desactivar', 'exportar'];
-
     /** @return array<string, mixed> */
     private function validPayload(array $overrides = []): array
     {
@@ -40,7 +38,7 @@ class PatientManagementTest extends TestCase
 
     public function test_registers_patient_with_folio_blank_record_and_consent(): void
     {
-        $member = $this->memberWith(self::ALL);
+        $member = $this->member();
 
         $this->actingAsMember($member)
             ->post('/pacientes', $this->validPayload())
@@ -64,11 +62,11 @@ class PatientManagementTest extends TestCase
 
     public function test_folios_are_consecutive_per_organization(): void
     {
-        $member = $this->memberWith(self::ALL);
+        $member = $this->member();
         $this->createPatient($member);
         $second = $this->createPatient($member);
 
-        $other = $this->memberWith(self::ALL);
+        $other = $this->member();
         $otherPatient = $this->createPatient($other);
 
         $this->assertSame('PAC-0002', $second->folio);
@@ -77,7 +75,7 @@ class PatientManagementTest extends TestCase
 
     public function test_registration_requires_signed_consent(): void
     {
-        $member = $this->memberWith(self::ALL);
+        $member = $this->member();
 
         $this->actingAsMember($member)
             ->post('/pacientes', $this->validPayload(['consent_signed' => null]))
@@ -88,7 +86,7 @@ class PatientManagementTest extends TestCase
 
     public function test_validates_phone_birth_date_and_required_fields(): void
     {
-        $member = $this->memberWith(self::ALL);
+        $member = $this->member();
 
         $this->actingAsMember($member)
             ->post('/pacientes', $this->validPayload(['full_name' => '', 'phone' => '55123', 'birth_date' => now()->addDay()->toDateString()]))
@@ -97,7 +95,7 @@ class PatientManagementTest extends TestCase
 
     public function test_phone_must_be_unique_even_against_inactive_patients(): void
     {
-        $member = $this->memberWith(self::ALL);
+        $member = $this->member();
         $existing = $this->createPatient($member, ['phone' => '5512345678']);
         $existing->update(['status' => PatientStatus::Inactive]);
 
@@ -108,16 +106,16 @@ class PatientManagementTest extends TestCase
 
     public function test_same_phone_is_allowed_in_another_organization(): void
     {
-        $other = $this->memberWith(self::ALL);
+        $other = $this->member();
         $this->createPatient($other, ['phone' => '5512345678']);
 
-        $member = $this->memberWith(self::ALL);
+        $member = $this->member();
         $this->actingAsMember($member)->post('/pacientes', $this->validPayload())->assertSessionHasNoErrors();
     }
 
     public function test_fiscal_data_is_all_or_nothing_and_saved_when_complete(): void
     {
-        $member = $this->memberWith(self::ALL);
+        $member = $this->member();
 
         $this->actingAsMember($member)
             ->post('/pacientes', $this->validPayload(['rfc' => 'LOAA900510AB1']))
@@ -137,9 +135,9 @@ class PatientManagementTest extends TestCase
 
     public function test_assigned_doctor_must_be_a_doctor_of_the_organization(): void
     {
-        $member = $this->memberWith(self::ALL);
-        $doctor = $this->memberWith([], false, $member->organization, doctor: true);
-        $notDoctor = $this->memberWith([], false, $member->organization);
+        $member = $this->member();
+        $doctor = $this->member($member->organization, doctor: true);
+        $notDoctor = $this->member($member->organization);
 
         $this->actingAsMember($member)
             ->post('/pacientes', $this->validPayload(['assigned_doctor_member_id' => $notDoctor->id]))
@@ -154,7 +152,7 @@ class PatientManagementTest extends TestCase
 
     public function test_list_shows_only_active_by_default_and_searches(): void
     {
-        $member = $this->memberWith(self::ALL);
+        $member = $this->member();
         $this->createPatient($member, ['full_name' => 'JUAN ACTIVO', 'phone' => '5511112222']);
         $inactive = $this->createPatient($member, ['full_name' => 'PEDRO INACTIVO']);
         $inactive->update(['status' => PatientStatus::Inactive]);
@@ -174,7 +172,7 @@ class PatientManagementTest extends TestCase
 
     public function test_updates_profile_keeping_own_phone(): void
     {
-        $member = $this->memberWith(self::ALL);
+        $member = $this->member();
         $patient = $this->createPatient($member, ['phone' => '5512345678']);
 
         $this->actingAsMember($member)
@@ -187,7 +185,7 @@ class PatientManagementTest extends TestCase
 
     public function test_deactivates_and_reactivates_patient(): void
     {
-        $member = $this->memberWith(self::ALL);
+        $member = $this->member();
         $patient = $this->createPatient($member);
 
         $this->actingAsMember($member)->patch("/pacientes/{$patient->id}/desactivar")
@@ -200,33 +198,33 @@ class PatientManagementTest extends TestCase
         $this->assertSame(PatientStatus::Active, $patient->fresh()->status);
     }
 
-    public function test_dentist_can_view_but_not_modify(): void
+    public function test_any_member_of_the_clinic_can_use_the_module(): void
     {
-        $owner = $this->memberWith(self::ALL);
+        // Sin roles ni permisos por ahora: cualquier miembro activo puede todo.
+        $owner = $this->member();
         $patient = $this->createPatient($owner);
-        $dentist = $this->memberWith(['ver'], false, $owner->organization, doctor: true);
+        $other = $this->member($owner->organization);
 
-        $this->actingAsMember($dentist)->get('/pacientes')->assertOk()->assertDontSee('Nuevo Paciente');
-        $this->actingAsMember($dentist)->get("/pacientes/{$patient->id}")->assertOk()->assertDontSee('Editar datos');
-        $this->actingAsMember($dentist)->post('/pacientes', $this->validPayload())->assertForbidden();
-        $this->actingAsMember($dentist)->put("/pacientes/{$patient->id}", $this->validPayload())->assertForbidden();
-        $this->actingAsMember($dentist)->patch("/pacientes/{$patient->id}/desactivar")->assertForbidden();
-        $this->actingAsMember($dentist)->get('/pacientes/exportar')->assertForbidden();
+        $this->actingAsMember($other)->get('/pacientes')->assertOk()->assertSee('Nuevo Paciente');
+        $this->actingAsMember($other)->get("/pacientes/{$patient->id}")->assertOk()->assertSee('Editar datos');
+        $this->actingAsMember($other)->patch("/pacientes/{$patient->id}/desactivar")->assertSessionHas('toast.title', 'Paciente desactivado');
     }
 
-    public function test_member_without_permissions_cannot_list(): void
+    public function test_user_without_active_membership_is_logged_out(): void
     {
-        $member = $this->memberWith([]);
+        $member = $this->member();
+        $member->update(['is_active' => false]);
 
-        $this->actingAsMember($member)->get('/pacientes')->assertForbidden();
+        $this->actingAsMember($member)->get('/pacientes')->assertRedirect('/login');
+        $this->assertGuest();
     }
 
     public function test_patients_of_another_organization_are_not_accessible(): void
     {
-        $other = $this->memberWith(self::ALL);
+        $other = $this->member();
         $foreign = $this->createPatient($other, ['full_name' => 'PACIENTE AJENO']);
 
-        $member = $this->memberWith(self::ALL);
+        $member = $this->member();
 
         $this->actingAsMember($member)->get('/pacientes?estado=todos')->assertDontSee('PACIENTE AJENO');
         $this->actingAsMember($member)->get("/pacientes/{$foreign->id}")->assertNotFound();
@@ -236,7 +234,7 @@ class PatientManagementTest extends TestCase
 
     public function test_exports_csv_with_filters(): void
     {
-        $member = $this->memberWith(self::ALL);
+        $member = $this->member();
         $this->createPatient($member, ['full_name' => 'EXPORTADO UNO']);
 
         $response = $this->actingAsMember($member)->get('/pacientes/exportar');

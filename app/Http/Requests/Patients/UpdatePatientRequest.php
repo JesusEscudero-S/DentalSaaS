@@ -10,7 +10,7 @@ class UpdatePatientRequest extends PatientRequest
 
     public function authorize(): bool
     {
-        return $this->user()->can('pacientes.editar');
+        return true; // Sin permisos por ahora (módulo 2. Gestión de roles).
     }
 
     protected function ignoredPatient(): ?Patient

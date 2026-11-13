@@ -8,12 +8,10 @@
             <h2 class="text-[16px] font-semibold text-slate-900">Contactos de emergencia</h2>
             <p class="text-[12px] text-slate-500">Personas a quienes llamar en caso necesario</p>
         </div>
-        @can('pacientes.editar')
             <x-ui.button x-on:click="$dispatch('open-modal', { name: 'create-guardian' })">
                 <x-ui.icon name="add" :size="16" />
                 Nuevo contacto
             </x-ui.button>
-        @endcan
     </div>
 
     @if ($patient->guardians->isEmpty())
@@ -39,7 +37,6 @@
                             @if ($guardian->email) · {{ $guardian->email }} @endif
                         </p>
                     </div>
-                    @can('pacientes.editar')
                         <div class="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
                             <button type="button" title="Editar contacto" aria-label="Editar contacto {{ $guardian->full_name }}"
                                 class="shrink-0 rounded-md hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50"
@@ -52,7 +49,6 @@
                                 <x-ui.icon name="action-delete" :size="30" />
                             </button>
                         </div>
-                    @endcan
                 </li>
             @endforeach
         </ul>

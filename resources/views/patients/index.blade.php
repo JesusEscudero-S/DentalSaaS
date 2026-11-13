@@ -16,18 +16,14 @@
             </p>
         </div>
         <div class="flex items-center gap-2.5 p-2.5">
-            @can('pacientes.exportar')
                 <x-ui.button variant="outline" size="sm" :href="route('patients.export', request()->query())">
                     <x-ui.icon name="import" :size="24" />
                     Exportar
                 </x-ui.button>
-            @endcan
-            @can('pacientes.crear')
                 <x-ui.button size="lg" x-data x-on:click="$dispatch('open-modal', { name: 'create-patient' })">
                     <x-ui.icon name="add" :size="16" />
                     Nuevo Paciente
                 </x-ui.button>
-            @endcan
         </div>
     </div>
 
@@ -104,14 +100,11 @@
                                     title="Ver perfil" aria-label="Ver perfil de {{ $patient->full_name }}">
                                     <x-ui.icon name="action-view" :size="30" />
                                 </a>
-                                @can('pacientes.editar')
                                     <button type="button" title="Editar" aria-label="Editar a {{ $patient->full_name }}"
                                         class="shrink-0 rounded-md hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50"
                                         x-on:click="$dispatch('open-modal', { name: 'edit-patient', patient: @js($patient->toFormArray()), action: @js(route('patients.update', $patient)) })">
                                         <x-ui.icon name="action-edit" :size="30" />
                                     </button>
-                                @endcan
-                                @can('pacientes.desactivar')
                                     @if ($patient->isActive())
                                         <button type="button" title="Desactivar" aria-label="Desactivar a {{ $patient->full_name }}"
                                             class="shrink-0 rounded-md hover:bg-danger-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-danger-500/50"
@@ -125,7 +118,6 @@
                                             <x-ui.button type="submit" variant="ghost" size="sm" class="!px-2 text-primary-600">Reactivar</x-ui.button>
                                         </form>
                                     @endif
-                                @endcan
                             </div>
                         </td>
                     </tr>

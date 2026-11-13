@@ -98,14 +98,12 @@
             </nav>
 
             <div class="flex items-center gap-3">
-                @can('pacientes.ver')
                     <form method="GET" action="{{ route('patients.index') }}" role="search"
                         class="flex h-9 w-[272px] items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 focus-within:border-primary-600 focus-within:ring-2 focus-within:ring-primary-600/15">
                         <x-ui.icon name="search" :size="18" />
                         <input type="search" name="q" placeholder="Buscar paciente, cita, factura…" aria-label="Búsqueda global"
                             class="w-full border-0 bg-transparent p-0 text-body text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-0">
                     </form>
-                @endcan
                 <button type="button" title="Tema oscuro (próximamente)" aria-label="Cambiar tema"
                     class="flex size-9 items-center justify-center rounded-lg border border-slate-200 bg-surface hover:bg-slate-50">
                     <x-ui.icon name="moon" :size="24" />

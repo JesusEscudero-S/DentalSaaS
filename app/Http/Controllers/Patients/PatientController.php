@@ -25,8 +25,6 @@ class PatientController extends Controller
     /** RF 3.2: listado y búsqueda. Por defecto solo pacientes activos. */
     public function index(Request $request): View
     {
-        $this->authorize('pacientes.ver');
-
         $filters = $this->filters($request);
 
         $patients = $this->filteredQuery($filters)
@@ -58,8 +56,6 @@ class PatientController extends Controller
     /** Perfil del paciente con sus contactos de emergencia debajo (RF 3.2 y 3.6). */
     public function show(Patient $patient): View
     {
-        $this->authorize('pacientes.ver');
-
         $patient->load(['guardians', 'fiscalProfile', 'assignedDoctor.user']);
 
         $balance = Patient::whereKey($patient->id)->withBalance()->first()?->balance ?? 0;
@@ -82,8 +78,6 @@ class PatientController extends Controller
     /** RF 3.4 */
     public function deactivate(Patient $patient): RedirectResponse
     {
-        $this->authorize('pacientes.desactivar');
-
         $this->patients->deactivate($patient);
 
         return back()->with('toast', ['type' => 'success', 'title' => 'Paciente desactivado', 'message' => "{$patient->full_name} ({$patient->folio})"]);
@@ -91,8 +85,6 @@ class PatientController extends Controller
 
     public function reactivate(Patient $patient): RedirectResponse
     {
-        $this->authorize('pacientes.desactivar');
-
         $this->patients->reactivate($patient);
 
         return back()->with('toast', ['type' => 'success', 'title' => 'Paciente reactivado', 'message' => "{$patient->full_name} ({$patient->folio})"]);
@@ -101,8 +93,6 @@ class PatientController extends Controller
     /** Botón "Exportar" de Figma: CSV del listado con los filtros aplicados. */
     public function export(Request $request): StreamedResponse
     {
-        $this->authorize('pacientes.exportar');
-
         $query = $this->filteredQuery($this->filters($request))->with('assignedDoctor.user')->orderBy('full_name');
 
         return response()->streamDownload(function () use ($query) {

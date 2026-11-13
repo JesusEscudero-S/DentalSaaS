@@ -10,8 +10,12 @@ use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Carga la organización activa (guardada en sesión al iniciar sesión) y la membresía
- * del usuario. Si ya no es válida (miembro u organización inactivos), cierra la sesión.
+ * Una sola clínica: busca la membresía activa del usuario en una organización activa
+ * (la más antigua si tuviera varias) y la deja en CurrentOrganization.
+ * Si el usuario no tiene acceso, cierra la sesión.
+ *
+ * Importante: en Kernel::$middlewarePriority corre ANTES de SubstituteBindings,
+ * para que el route model binding ya filtre por la clínica.
  */
 class ResolveOrganization
 {
@@ -20,18 +24,22 @@ class ResolveOrganization
     public function handle(Request $request, Closure $next): Response
     {
         $member = OrganizationMember::query()
-            ->with(['role', 'user'])
-            ->where('user_id', Auth::id())
-            ->where('organization_id', $request->session()->get('organization_id'))
-            ->where('is_active', true)
-            ->whereHas('organization', fn ($q) => $q->where('status', 'active'))
+            ->with(['user', 'role'])
+            ->join('organizations', 'organizations.id', '=', 'organization_members.organization_id')
+            ->where('organization_members.user_id', Auth::id())
+            ->where('organization_members.is_active', true)
+            ->where('organizations.status', 'active')
+            ->orderBy('organizations.created_at')
+            ->select('organization_members.*')
             ->first();
 
         if (! $member || ! $member->user?->is_active) {
-            Auth::logout();
+            Auth::guard('web')->logout();
             $request->session()->invalidate();
+            $request->session()->regenerateToken();
 
-            return redirect()->route('login');
+            return redirect()->route('login')
+                ->withErrors(['email' => 'Tu usuario no tiene acceso activo a la clínica.']);
         }
 
         $this->current->set($member);

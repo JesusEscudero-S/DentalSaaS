@@ -30,8 +30,6 @@ class PatientGuardianController extends Controller
 
     public function destroy(Patient $patient, PatientGuardian $guardian): RedirectResponse
     {
-        $this->authorize('pacientes.editar');
-
         $this->guardians->delete($guardian);
 
         return $this->back($patient, 'Contacto borrado');
