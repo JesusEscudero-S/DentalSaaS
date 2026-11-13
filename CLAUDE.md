@@ -3,12 +3,17 @@
 Sistema de gestión para consultorios dentales. Laravel 10 (PHP 8.1+), MySQL, front en Blade.
 11 módulos; se desarrollan uno por rama (`feature/<modulo>`).
 
-> Convenciones fijadas al implementar el módulo 3 (Pacientes). Actualizar este archivo cuando un módulo cambie alguna.
+> Este repo es la **base de aprendizaje** del equipo: trae login (Breeze), la BD, el diseño de Figma y el
+> módulo de ejemplo Pacientes. Cada integrante programa sus módulos en su rama. Si usas Claude Code para
+> aprender, pídele que **explique y revise**, no que escriba el módulo completo.
+> Actualizar este archivo cuando un módulo cambie alguna convención.
 
 ## Fuentes de verdad
 
-1. **Base de datos** — BD MySQL/MariaDB `dentalsaas` (XAMPP, MariaDB 10.4), creada desde el script
-   `Dental Saas.sql`. **La BD manda sobre el documento de requerimientos**: si chocan, se sigue la BD.
+1. **Base de datos** — **MySQL 8**, BD `dentalsaas`. El esquema son las **migraciones de
+   `database/migrations/`** (tomadas tal cual del proyecto de referencia del equipo, con triggers incluidos).
+   **No se editan**; cualquier cambio va en una migración nueva y se acuerda con el equipo.
+   **La BD manda sobre el documento de requerimientos**: si chocan, se sigue la BD.
    Si un requerimiento necesita algo que la BD no tiene, se pregunta antes de agregar columnas o tablas.
 2. **Documento formal de requerimientos** (PDF) — reglas de negocio (RN-xx), mensajes y validaciones,
    en todo lo que no contradiga a la BD. No está 100% actualizado.
@@ -53,12 +58,10 @@ archivos, preguntas) y **no escribir código hasta que se apruebe**.
 - **Datos derivados no se guardan** (ej. edad: accessor desde `birth_date`).
 - **CHECKs**: los `CHECK` del SQL solo están como comentario; la BD no los aplica. Cada regla
   (montos > 0, FDI válido, `ends_at > starts_at`, etc.) se valida en el FormRequest/Service.
-- **Migraciones**: el esquema base es `database/schema/dentalsaas.sql` (copia del SQL original) y lo
-  carga la migración `2026_11_11_000000_create_base_schema` (no hace nada si la BD ya fue importada).
-  Cada cambio posterior va en **una migración nueva** (ej. `..._fix_doctor_profiles_foreign_key`,
-  que corrige la FK invertida de la línea 919); nunca se edita `dentalsaas.sql`. No se tocan tablas
-  existentes sin aprobación. Las migraciones por defecto de Laravel se eliminaron (chocan con el
-  esquema) y Sanctum tiene `ignoreMigrations()`.
+- **Migraciones**: las de `database/migrations/` son el esquema oficial; están excluidas de Pint
+  (`pint.json`) para que queden idénticas. Cambios = **migración nueva** (`php artisan make:migration`).
+  Hay **triggers** en la BD (documentos firmados inmutables, inventario inmutable, último administrador,
+  aplicaciones de pago); si un INSERT/UPDATE falla con `SQLSTATE[45000]`, es una regla del trigger.
 - **Nombres en mayúsculas**: nombres de personas, razón social y RFC se guardan en mayúsculas.
 - **Teléfonos**: se guardan solo los 10 dígitos y se muestran con `Ui::phone()` ("55 1847 2093").
 
@@ -68,28 +71,30 @@ archivos, preguntas) y **no escribir código hasta que se apruebe**.
   vía `App\Services\AuditLogger` (`entity_type`, `entity_id`, `action`, `changed_fields`).
 - `changed_fields` solo con campos relevantes: nunca secretos ni texto clínico completo.
 
-## Permisos
+## Roles y permisos
 
-- Tabla `permissions (module, action)`, asignados a roles en `role_permissions`.
-- Se verifican con la forma `"<module>.<action>"`, ej. `pacientes.crear`: un `Gate::before` en
-  `AuthServiceProvider` los resuelve contra el rol del miembro en la organización activa
-  (`CurrentOrganization::can()`; `roles.is_system_admin` tiene todo). Acciones estándar: `ver`,
-  `crear`, `editar`, `desactivar`, `exportar` (+ las específicas del módulo). Los permisos nuevos se
-  agregan a `PermissionSeeder::PERMISSIONS` y a los roles de `DemoOrganizationSeeder`.
-- En Blade, ocultar botones con `@can(...)`; en el backend **siempre** autorizar (`$this->authorize()`
-  en el controlador o `authorize()` en el FormRequest). Ocultar un botón no es seguridad.
-- Roles del negocio: Administrador, Secretaria/Asistente, Odontólogo, Jefe de odontología.
+- **Por ahora no hay permisos**: cualquier usuario con sesión y acceso a la clínica puede usar todo.
+  Los FormRequests devuelven `true` en `authorize()` y no se usan `@can` ni `$this->authorize()`.
+- Las tablas `roles`, `permissions` y `role_permissions` existen y se implementan en el **módulo 2
+  (Gestión de roles)**; ese módulo decide cómo verificar permisos en todos los demás.
+- Roles del negocio: Administrador, Secretaria/Asistente, Odontólogo, Jefe de odontología
+  (el seeder los crea solo como catálogo).
 
-## Sesión y organización activa
+## Login y clínica activa
 
-- `ResolveOrganization` (alias `organization`) carga el miembro de `session('organization_id')` en
-  `App\Support\CurrentOrganization`. Está en `$middlewarePriority` **antes de `SubstituteBindings`**:
-  si no, el route model binding se resuelve sin el scope y otra organización podría ver registros
-  (hay una prueba que lo verifica). Toda ruta de la app va en el grupo `['auth', 'organization']`.
-- **Login temporal de desarrollo** (`/login`, solo `APP_ENV=local|testing`): elige un miembro sembrado.
-  La tabla `users` no tiene contraseña; el login real se hace en el módulo 1 y reemplaza a
-  `DevLoginController`.
-- Datos de demo: `php artisan db:seed` (organización "Clínica Dental Sonrisas", 7 miembros, 12 pacientes).
+- **Laravel Breeze** (stack Blade) instalado a mano: solo login, logout y recuperar contraseña
+  (`routes/auth.php`, `app/Http/Controllers/Auth`, `resources/views/auth`). **Sin registro público**:
+  los usuarios los da de alta el administrador (módulo 1). **No correr `php artisan breeze:install`**:
+  sobrescribe el layout, Tailwind y las rutas.
+- Solo entran usuarios con `users.is_active = 1`. Mensajes en `lang/es/auth.php` y `lang/es/passwords.php`.
+  Con `MAIL_MAILER=log` el correo de recuperación se escribe en `storage/logs/laravel.log`.
+- **Una sola clínica**: `ResolveOrganization` (alias `organization`) busca la membresía activa del usuario
+  en una organización activa y la deja en `App\Support\CurrentOrganization` (`id()`, `member()`).
+  Si no tiene, cierra la sesión. Está en `$middlewarePriority` **antes de `SubstituteBindings`**: si no,
+  el route model binding se resolvería sin el filtro de clínica (hay una prueba que lo verifica).
+- Toda ruta de la app va en el grupo `['auth', 'organization']` de `routes/web.php`.
+- Datos de demo: `php artisan migrate --seed` (clínica "Clínica Dental Sonrisas", 7 usuarios con
+  contraseña `password`, 12 pacientes).
 
 ## Estructura por módulo
 
@@ -110,7 +115,7 @@ database/factories, database/seeders
 tests/Feature/<Modulo>/
 ```
 
-- **Controladores delgados**: validan (FormRequest), autorizan, llaman al Service y devuelven vista o
+- **Controladores delgados**: validan (FormRequest), llaman al Service y devuelven vista o
   redirect. La lógica de varias tablas va en el Service dentro de `DB::transaction()`.
 - Controladores resource cuando aplique; acciones extra como rutas explícitas
   (`PATCH /pacientes/{patient}/desactivar`).
@@ -137,8 +142,9 @@ tests/Feature/<Modulo>/
     `surface #ffffff`. Acentos de avatar/badge: blue, sky, green `#10b981`, violet `#8b5cf6`,
     amber `#f59e0b`, slate.
   - Radio base 8px, bordes de 1px.
-- Layout `resources/views/layouts/app.blade.php`: `Sidebar` (235px, ítem activo según el módulo),
-  `TopBar` (60px, breadcrumb, buscador global, notificaciones, avatar) y contenido sobre `slate-50`.
+- Layout `resources/views/components/layouts/app.blade.php` (`<x-layouts.app active="..." :breadcrumbs="[...]">`):
+  `Sidebar` (235px, ítem activo según el módulo; cada módulo activa su `href`), `TopBar` (60px,
+  breadcrumb, buscador, avatar) y contenido sobre `slate-50`. Pantallas sin sesión: `<x-layouts.guest>`.
 - **Componentes Blade = componentes de Figma**, en `resources/views/components/ui/`, con el nombre en
   kebab-case y los variants como props:
   `button` (variant: primary|secondary|danger|ghost; estados default/hover/pressed/focus/disabled/
@@ -166,15 +172,16 @@ tests/Feature/<Modulo>/
 
 ## Pruebas y calidad
 
-- Feature tests por cada caso de uso del módulo (éxito, validaciones, reglas RN, permisos y
-  aislamiento entre organizaciones). Corren contra la BD `dentalsaas_testing` (MariaDB, `phpunit.xml`)
-  con `RefreshDatabase`; los helpers `memberWith()`, `actingAsMember()` y `createPatient()` están en
+- Feature tests por cada caso de uso del módulo (éxito, validaciones, reglas RN y aislamiento entre
+  clínicas). Corren contra la BD `dentalsaas_testing` (MySQL 8, ver `phpunit.xml`) con
+  `RefreshDatabase`; los helpers `member()`, `actingAsMember()` y `createPatient()` están en
   `tests/TestCase.php`.
 - `php artisan test` y `./vendor/bin/pint` deben pasar antes de cada commit.
 
 ## Git
 
-- Una rama por módulo: `feature/<modulo>` (ej. `feature/gestion-pacientes`), creada desde `dev-jesus`.
+- `main` es la base del equipo. Una rama por módulo: `feature/<modulo>` (ej. `feature/agenda-citas`),
+  creada desde `main`, y se integra con un Pull Request revisado por otro integrante.
 - Commits pequeños en español, en imperativo: `Agrega registro de pacientes con expediente en blanco`.
 - No hacer commit de `.env`, credenciales ni archivos de `storage/`.
 
