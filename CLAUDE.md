@@ -180,8 +180,10 @@ tests/Feature/<Modulo>/
 
 ## Git
 
-- `main` es la base del equipo. Una rama por módulo: `feature/<modulo>` (ej. `feature/agenda-citas`),
-  creada desde `main`, y se integra con un Pull Request revisado por otro integrante.
+- `main` es la base del equipo; nadie trabaja directo en ella.
+- Una rama por integrante, en minúsculas: `dev-jesus`, `dev-tomas`, `dev-braulio`, `dev-habib`,
+  `dev-victor`. Se actualizan seguido con `git pull origin main` y se integran a `main` con un
+  Pull Request revisado por otro integrante.
 - Commits pequeños en español, en imperativo: `Agrega registro de pacientes con expediente en blanco`.
 - No hacer commit de `.env`, credenciales ni archivos de `storage/`.
 

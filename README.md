@@ -146,33 +146,41 @@ php artisan serve
 
 ## 4. Cómo trabajar en equipo con Git
 
-1. Siempre parte de `main` actualizado:
+Cada integrante tiene **su propia rama**, creada a partir de `main`:
+
+| Integrante | Rama |
+|---|---|
+| Jesús | `dev-jesus` |
+| Tomás | `dev-tomas` |
+| Braulio | `dev-braulio` |
+| Habib | `dev-habib` |
+| Víctor | `dev-victor` |
+
+Los nombres van **en minúsculas**: en Windows, Git confunde `dev-Jesus` con `dev-jesus`.
+
+1. La primera vez, después de clonar, cámbiate a tu rama. Ya trae todo lo de `main`.
    ```bash
-   git checkout main
+   git checkout dev-tomas
    ```
-   ```bash
-   git pull
-   ```
-2. Crea **tu rama** para tu módulo:
-   ```bash
-   git checkout -b feature/agenda-citas
-   ```
-3. Programa y haz commits pequeños, con mensajes en español:
+2. Programa y haz commits pequeños, con mensajes en español:
    ```bash
    git add .
    ```
    ```bash
    git commit -m "Agrega listado de citas"
    ```
-4. Sube tu rama:
+3. Sube tus cambios a tu rama:
    ```bash
-   git push -u origin feature/agenda-citas
+   git push
    ```
-5. En GitHub abre un **Pull Request** hacia `main` y pide que otro compañero lo revise.
-6. Para traer lo que otros ya integraron a `main`:
+4. Cuando termines una parte (por ejemplo, tu módulo), abre en GitHub un **Pull Request de tu rama hacia `main`** y pide que otro compañero lo revise. Después de revisarlo, se fusiona en `main`.
+5. **Seguido (idealmente cada día)**, trae a tu rama lo que los demás ya integraron en `main`:
    ```bash
    git pull origin main
    ```
+   Si Git marca un conflicto, revisa los archivos que indica, deja la versión correcta y haz commit.
+
+> Nunca trabajes directo en `main`: todo entra por Pull Request.
 
 **Para no pisarse entre ustedes:**
 - **Cada quien trabaja en sus propias carpetas:** `routes/modules/<modulo>.php`, `app/.../<Modulo>/`, `resources/views/<modulo>/` y `tests/Feature/<Modulo>/`.
@@ -186,7 +194,7 @@ php artisan serve
 
 ## 5. Checklist para hacer tu módulo
 
-1. Crea tu rama desde `main`.
+1. Trabaja en tu rama `dev-<tu-nombre>`, actualizada con `git pull origin main`.
 2. **Plan antes de código:**
    - Qué tablas de la base de datos usa tu módulo (búscalas en `database/migrations/`).
    - Qué pantallas hay en Figma y cuáles faltan.
