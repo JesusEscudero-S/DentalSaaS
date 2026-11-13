@@ -1,0 +1,17 @@
+{
+    "preset": "laravel",
+    "notPath": [
+        "database/migrations/2014_10_12_100000_create_password_reset_tokens_table.php",
+        "database/migrations/2019_08_19_000000_create_failed_jobs_table.php",
+        "database/migrations/2019_12_14_000001_create_personal_access_tokens_table.php",
+        "database/migrations/2025_01_01_000002_create_organizations_tables.php",
+        "database/migrations/2025_01_01_000003_create_users_roles_tables.php",
+        "database/migrations/2025_01_01_000004_create_patients_catalog_appointments_tables.php",
+        "database/migrations/2025_01_01_000005_create_clinical_prescriptions_tables.php",
+        "database/migrations/2025_01_01_000006_create_quotes_billing_payments_tables.php",
+        "database/migrations/2025_01_01_000007_create_finance_inventory_notifications_tables.php",
+        "database/migrations/2025_01_01_000008_create_triggers_and_rules.php",
+        "database/migrations/2025_01_02_000001_add_auth_columns_to_users.php",
+        "database/migrations/2025_01_03_000001_fix_inventory_stock_trigger_for_negative_movements.php"
+    ]
+}
