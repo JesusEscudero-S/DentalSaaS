@@ -2,17 +2,18 @@
 
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group. Make something great!
-|
-*/
+require __DIR__.'/auth.php';
 
-Route::get('/', function () {
-    return view('welcome');
+/*
+| Rutas de la aplicación: requieren sesión (auth) y una clínica activa (organization).
+| Cada módulo registra sus rutas en routes/modules/<modulo>.php y se agrega aquí.
+*/
+Route::middleware(['auth', 'organization'])->group(function () {
+    // El Dashboard aún no existe: la entrada es el listado de pacientes.
+    Route::redirect('/', '/pacientes')->name('home');
+
+    require __DIR__.'/modules/pacientes.php';
+    // require __DIR__.'/modules/agenda.php';
+    // require __DIR__.'/modules/servicios.php';
+    // ...
 });

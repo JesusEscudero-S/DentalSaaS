@@ -1,66 +1,219 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Dental SaaS
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Sistema de gestión para consultorios dentales hecho con **Laravel 10**, **MySQL 8**, **Blade**, **Tailwind CSS** y **Alpine.js**.
 
-## About Laravel
+Este repositorio es la **base del proyecto**: ya trae el login, la base de datos, el diseño de Figma y un módulo de ejemplo (**Pacientes**). Cada integrante del equipo programa sus propios módulos encima de esta base.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- Reglas y convenciones del proyecto: [`CLAUDE.md`](CLAUDE.md). Léanlo antes de empezar. También sirve como instrucciones si usan Claude Code.
+- Diseño: Figma *Interfaces Graficas Dental Saas*, con la página `Componentes` y una página por módulo.
+- Requerimientos: documento formal (PDF). **Si choca con la base de datos, manda la base de datos.**
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## 1. Qué necesitas instalar
 
-## Learning Laravel
+| Programa | Versión | Para qué |
+|---|---|---|
+| PHP | 8.1 o superior | Lenguaje de Laravel |
+| Composer | 2.x | Instala las librerías de PHP |
+| Node.js | 18 o superior | Compila los estilos (Tailwind) |
+| **MySQL** | **8.0 o superior** | Base de datos |
+| Git | cualquiera | Control de versiones |
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### ¿Cómo tener MySQL 8? Elige una opción
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+La base de datos usa funciones de **MySQL 8**. Escoge la opción que te acomode:
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+- **Laragon** (la más sencilla en Windows): trae PHP, MySQL 8 y Node en un solo instalador. Descárgalo de laragon.org, instálalo y presiona **Start All**. Usuario `root`, sin contraseña.
+- **Instalador oficial de MySQL** (MySQL Installer / MySQL Workbench, desde dev.mysql.com). Durante la instalación eliges la contraseña de `root`.
+- **Docker**, si ya lo usas:
+  ```bash
+  docker run -d --name mysql8-dental -e MYSQL_ROOT_PASSWORD=secret -p 3306:3306 mysql:8.0
+  ```
+- **XAMPP** trae **MariaDB**, no MySQL 8. Puede dar errores con esta base de datos, así que no lo recomendamos.
 
-## Laravel Sponsors
+---
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## 2. Instalar el proyecto (paso a paso)
 
-### Premium Partners
+**1. Clona el repositorio** y entra a la carpeta:
+```bash
+git clone https://github.com/JesusEscudero-S/DentalSaaS.git
+```
+```bash
+cd DentalSaaS
+```
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+**2. Instala las librerías:**
+```bash
+composer install
+```
+```bash
+npm install
+```
 
-## Contributing
+**3. Crea tu archivo de configuración** `.env` y genera la llave de la aplicación:
+```bash
+cp .env.example .env
+```
+```bash
+php artisan key:generate
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+**4. Configura la base de datos.**
+- Crea en MySQL dos bases de datos vacías: `dentalsaas` (la de trabajo) y `dentalsaas_testing` (la que usan las pruebas). Puedes hacerlo con HeidiSQL (viene en Laragon), MySQL Workbench o phpMyAdmin.
+  ```sql
+  CREATE DATABASE dentalsaas CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+  CREATE DATABASE dentalsaas_testing CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+  ```
+- Abre el `.env` y revisa estas líneas. Ajusta el puerto y la contraseña a tu MySQL; en Laragon, `DB_PASSWORD` va vacío.
+  ```
+  DB_HOST=127.0.0.1
+  DB_PORT=3306
+  DB_DATABASE=dentalsaas
+  DB_USERNAME=root
+  DB_PASSWORD=
+  ```
 
-## Code of Conduct
+**5. Crea las tablas y los datos de prueba:**
+```bash
+php artisan migrate --seed
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+**6. Compila los estilos y levanta el servidor:**
+```bash
+npm run build
+```
+```bash
+php artisan serve
+```
 
-## Security Vulnerabilities
+**7. Abre http://localhost:8000** e inicia sesión con alguno de los usuarios de prueba. **Todos tienen la contraseña `password`.**
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+| Usuario | Correo |
+|---|---|
+| Administrador | `admin@demo.test` |
+| Secretaria | `karla.mendez@demo.test` |
+| Odontóloga (jefa) | `mariana.reyes@demo.test` |
+| Odontólogo | `andres.salazar@demo.test` |
 
-## License
+> **Roles y permisos:** por ahora **no hay**. Cualquier usuario puede usar todo, para que nadie se bloquee mientras programa. Los permisos se hacen en el módulo 2 (Gestión de roles).
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+> **"Olvidé mi contraseña":** el correo no se envía de verdad. Se escribe en `storage/logs/laravel.log`; ahí está el enlace.
+
+### Comandos útiles
+
+| Comando | Para qué |
+|---|---|
+| `npm run dev` | Déjalo corriendo en otra terminal mientras editas vistas: recarga los estilos solo |
+| `php artisan migrate:fresh --seed` | Borra **todas** las tablas y las vuelve a crear con los datos de prueba |
+| `php artisan test` | Corre las pruebas automáticas (usa `dentalsaas_testing`) |
+| `./vendor/bin/pint` | Ordena el formato del código PHP |
+
+---
+
+## 3. Cómo está armado
+
+### La base (no la modifiquen sin avisar al equipo)
+
+| Qué | Dónde |
+|---|---|
+| Login, logout y recuperar contraseña (Laravel Breeze) | `routes/auth.php`, `app/Http/Controllers/Auth/`, `resources/views/auth/` |
+| Base de datos (todas las tablas) | `database/migrations/` |
+| Clínica activa del usuario | `app/Http/Middleware/ResolveOrganization.php`, `app/Support/CurrentOrganization.php` |
+| Filtro automático por clínica en los modelos | `app/Models/Concerns/BelongsToOrganization.php` |
+| Folios (`PAC-0001`, `RX-0001`…) | `app/Services/FolioService.php` |
+| Bitácora (`audit_log`) | `app/Services/AuditLogger.php` |
+| Layout con sidebar y barra superior | `resources/views/components/layouts/app.blade.php` |
+| Componentes de Figma (botón, input, select, modal, toast, tabla…) | `resources/views/components/ui/` |
+| Íconos de Figma | `public/img/ui/*.svg` → `<x-ui.icon name="search" />` |
+| Colores y tipografía de Figma | `tailwind.config.js` |
+| Datos de prueba | `database/seeders/` |
+
+### El módulo de ejemplo: Pacientes
+
+Úsenlo como **guía** para hacer el suyo. Sigue el camino de una petición:
+
+1. **Ruta** → `routes/modules/pacientes.php`, incluida en `routes/web.php`.
+2. **Controlador** → `app/Http/Controllers/Patients/`. Solo recibe, llama al servicio y responde.
+3. **Validación** → `app/Http/Requests/Patients/`. Reglas y mensajes en español.
+4. **Lógica** → `app/Services/Patients/`. Guarda en varias tablas dentro de una transacción.
+5. **Modelos** → `app/Models/Patient.php` y relacionados. Enums en `app/Enums/`.
+6. **Vistas** → `resources/views/patients/`. El listado y el perfil; las altas y ediciones van en modales.
+7. **Pruebas** → `tests/Feature/Patients/`.
+
+---
+
+## 4. Cómo trabajar en equipo con Git
+
+1. Siempre parte de `main` actualizado:
+   ```bash
+   git checkout main
+   ```
+   ```bash
+   git pull
+   ```
+2. Crea **tu rama** para tu módulo:
+   ```bash
+   git checkout -b feature/agenda-citas
+   ```
+3. Programa y haz commits pequeños, con mensajes en español:
+   ```bash
+   git add .
+   ```
+   ```bash
+   git commit -m "Agrega listado de citas"
+   ```
+4. Sube tu rama:
+   ```bash
+   git push -u origin feature/agenda-citas
+   ```
+5. En GitHub abre un **Pull Request** hacia `main` y pide que otro compañero lo revise.
+6. Para traer lo que otros ya integraron a `main`:
+   ```bash
+   git pull origin main
+   ```
+
+**Para no pisarse entre ustedes:**
+- **Cada quien trabaja en sus propias carpetas:** `routes/modules/<modulo>.php`, `app/.../<Modulo>/`, `resources/views/<modulo>/` y `tests/Feature/<Modulo>/`.
+- **Archivos que tocan varios.** Hagan cambios pequeños y avisen al equipo:
+  - `routes/web.php`: una línea `require` por módulo.
+  - El sidebar en `components/layouts/app.blade.php`: activar el enlace de su módulo.
+  - `database/seeders/`: sus datos de prueba.
+- **Cambios a la base de datos:** solo con **una migración nueva** (`php artisan make:migration ...`). **Nunca** editen las migraciones que ya existen.
+
+---
+
+## 5. Checklist para hacer tu módulo
+
+1. Crea tu rama desde `main`.
+2. **Plan antes de código:**
+   - Qué tablas de la base de datos usa tu módulo (búscalas en `database/migrations/`).
+   - Qué pantallas hay en Figma y cuáles faltan.
+   - Qué pide el PDF.
+   - Qué dudas tienes.
+
+   Coméntalo con el equipo.
+3. Modelos en `app/Models`, con `HasUuids` y `BelongsToOrganization`. Si tu módulo usa listas fijas (estatus, tipos), crea enums en `app/Enums`.
+4. Rutas en `routes/modules/<modulo>.php` y agrégalas en `routes/web.php`.
+5. FormRequests, Service y controlador, copiando la forma de `Patients`.
+6. Vistas con `<x-layouts.app active="<modulo>">` y los componentes de `components/ui`. Activa tu enlace en el sidebar.
+7. Datos de prueba en un seeder, si los necesitas.
+8. Pruebas en `tests/Feature/<Modulo>/`.
+9. `php artisan test` y `./vendor/bin/pint` sin errores. Después, abre tu Pull Request.
+
+### Módulos
+
+| # | Módulo | Responsable |
+|---|---|---|
+| 1 | Gestión de usuarios | |
+| 2 | Gestión de roles (permisos) | |
+| 3 | Gestión de pacientes y contactos | ✅ Ejemplo incluido en la base |
+| 4 | Agenda y citas | |
+| 5 | Servicios odontológicos | |
+| 6 | Expedientes | |
+| 7 | Tratamientos | |
+| 8 | Recetas médicas | |
+| 9 | Pagos | |
+| 10 | Inventario | |
+| 11 | Reportes y estadísticas | |

@@ -1,0 +1,7 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="35" height="35" viewBox="0 0 35 35" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="ButtonArrow">
+<rect x="0.5" y="0.5" width="34" height="34" rx="8" fill="#E2E8F0"/>
+<rect x="0.5" y="0.5" width="34" height="34" rx="8" stroke="#CBD5E1"/>
+<path id="Vector" d="M19.575 22.35L14.725 17.5L19.575 12.65L20.275 13.35L16.125 17.5L20.275 21.65L19.575 22.35Z" fill="black"/>
+</g>
+</svg>
