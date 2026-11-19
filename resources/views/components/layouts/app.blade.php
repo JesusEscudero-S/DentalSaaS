@@ -17,7 +17,7 @@
         $active = $active ?? '';
         $nav = [
             ['key' => 'dashboard', 'label' => 'Dashboard', 'icon' => 'nav-dashboard', 'href' => null],
-            ['key' => 'agenda', 'label' => 'Agenda', 'icon' => 'nav-agenda', 'href' => null],
+            ['key' => 'agenda', 'label' => 'Agenda', 'icon' => 'nav-agenda', 'href' => route('agenda.index')],
             ['key' => 'pacientes', 'label' => 'Pacientes', 'icon' => 'nav-pacientes', 'href' => route('patients.index')],
             ['key' => 'recetas', 'label' => 'Recetas', 'icon' => 'nav-recetas', 'href' => null],
             ['key' => 'presupuestos', 'label' => 'Presupuestos', 'icon' => 'nav-presupuestos', 'href' => null],
