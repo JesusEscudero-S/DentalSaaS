@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Branch;
 use App\Models\DoctorProfile;
 use App\Models\Organization;
 use App\Models\OrganizationMember;
@@ -48,7 +49,13 @@ class DemoOrganizationSeeder extends Seeder
                 ['legal_name' => 'CLINICA DENTAL SONRISAS SA DE CV', 'phone' => '5555555555', 'email' => 'contacto@demo.test'],
             );
 
+            Branch::firstOrCreate(
+                ['organization_id' => $organization->id, 'name' => 'Clínica Centro'],
+                ['address_line' => 'Av. Reforma 123, CDMX', 'phone' => '5555555556', 'is_main' => true],
+            );
+
             $roles = [];
+
             foreach (self::ROLES as $code => [$name, $isAdmin]) {
                 $roles[$code] = Role::firstOrCreate(
                     ['organization_id' => $organization->id, 'code' => $code],
