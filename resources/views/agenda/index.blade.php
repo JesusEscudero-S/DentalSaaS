@@ -18,7 +18,17 @@
 
     <div class="overflow-hidden rounded-[10px] bg-white">
        <x-ui.card class="p-6">
-        <p class="text-body text-slate-500">Aquí irá el calendario semanal.</p>
+        @forelse ($appointments as $appointment)
+    <p class="text-body">
+        {{ $appointment->starts_at->translatedFormat('D j, H:i') }} ·
+        {{ $appointment->patient->full_name }} ·
+        {{ $appointment->doctor->displayName() }} ·
+        {{ $appointment->notes }} ·
+        {{ $appointment->status->label() }}
+    </p>
+@empty
+    <p class="text-body text-slate-500">No hay citas esta semana.</p>
+@endforelse
         </x-ui.card>
 
     </div>
