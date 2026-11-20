@@ -1,0 +1,148 @@
+{{-- Figma: Citas y agenda / Shell (calendario). Vista Semana (lunes a sábado), Día o Mes. --}}
+@php
+    $isDay = $view === 'dia';
+    $isMonth = $view === 'mes';
+    $isWeek = ! $isDay && ! $isMonth;
+
+    $subtitle = match ($view) {
+        'dia' => ucfirst($rangeStart->translatedFormat('l j \d\e F Y')),
+        'mes' => ucfirst($anchor->translatedFormat('F \d\e Y')),
+        default => 'Semana del '.$rangeStart->format('j').' - '.$rangeEnd->translatedFormat('j \d\e F Y'),
+    };
+
+    $rangeLabel = match ($view) {
+        'dia' => $rangeStart->translatedFormat('D j M Y'),
+        'mes' => ucfirst($anchor->translatedFormat('F Y')),
+        default => $rangeStart->format('j').' - '.$rangeEnd->translatedFormat('j F Y'),
+    };
+
+    $unit = match ($view) { 'dia' => ['Día anterior', 'Día siguiente'], 'mes' => ['Mes anterior', 'Mes siguiente'], default => ['Semana anterior', 'Semana siguiente'] };
+
+    // Clases repetidas de la barra
+    $navButton = 'flex size-8 items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50';
+    $chip = 'flex h-8 items-center gap-1.5 rounded-full border px-3 text-[12px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50';
+    $chipOn = 'border-primary-600 bg-primary-50 text-primary-600';
+    $chipOff = 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50';
+    $segment = 'rounded-md px-3 py-1 transition-colors';
+@endphp
+
+<x-layouts.app title="Agenda" active="agenda" :breadcrumbs="['Agenda' => null]">
+    {{-- Encabezado --}}
+    <div class="flex items-start justify-between gap-6 pb-5">
+        <div class="py-[3px]">
+            <h1 class="text-h1 text-slate-900">Agenda</h1>
+            <p class="pt-[3px] text-body font-semibold text-slate-400">{{ $subtitle }}</p>
+        </div>
+        <div class="flex items-center gap-2.5 p-2.5">
+            <x-ui.button size="lg" x-data x-on:click="$dispatch('open-modal', { name: 'create-appointment' })">
+                <x-ui.icon name="add" :size="16" />
+                Nueva cita
+            </x-ui.button>
+        </div>
+    </div>
+
+    {{-- Barra: navegación, vista y filtro por doctor (Figma). Las URLs las arma el controlador. --}}
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-2">
+            <a href="{{ $prevUrl }}" class="{{ $navButton }}" aria-label="{{ $unit[0] }}">
+                <x-ui.icon name="expand-right" :size="20" class="rotate-180" />
+            </a>
+
+            <p class="min-w-[180px] text-center text-[14px] font-semibold text-slate-900">{{ $rangeLabel }}</p>
+
+            <a href="{{ $nextUrl }}" class="{{ $navButton }}" aria-label="{{ $unit[1] }}">
+                <x-ui.icon name="expand-right" :size="20" />
+            </a>
+
+            <a href="{{ $todayUrl }}"
+                class="flex h-8 items-center rounded-lg border border-slate-200 bg-white px-3 text-[12.5px] font-semibold text-slate-900 hover:bg-slate-50">
+                Hoy
+            </a>
+
+            {{-- Día / Semana / Mes (SegmentedControl de Figma) --}}
+            <nav class="ml-2 flex rounded-lg bg-slate-100 p-0.5 text-[12.5px] font-semibold" aria-label="Vista del calendario">
+                @foreach (['Día' => [$dayViewUrl, $isDay], 'Semana' => [$weekViewUrl, $isWeek], 'Mes' => [$monthViewUrl, $isMonth]] as $text => [$href, $current])
+                    <a href="{{ $href }}" @class([$segment, 'bg-white text-slate-900 shadow-sm' => $current, 'text-slate-500 hover:text-slate-900' => ! $current])
+                        @if ($current) aria-current="true" @endif>{{ $text }}</a>
+                @endforeach
+            </nav>
+        </div>
+
+        {{-- Chips de doctor: el punto tiene el mismo color que sus tarjetas --}}
+        <nav class="flex flex-wrap items-center gap-2" aria-label="Filtrar por doctor">
+            <a href="{{ $doctorUrl(null) }}" class="{{ $chip }} {{ $doctorId ? $chipOff : $chipOn }}"
+                @if (! $doctorId) aria-current="true" @endif>
+                Todos
+            </a>
+
+            @foreach ($doctors as $doctor)
+                @php
+                    // "Dra. Lucía Fonseca" → "Lucía" (como en Figma)
+                    $shortName = explode(' ', $doctor->displayName())[1] ?? $doctor->displayName();
+                    $isActive = $doctorId === $doctor->id;
+                @endphp
+                <a href="{{ $doctorUrl($doctor->id) }}" class="{{ $chip }} {{ $isActive ? $chipOn : $chipOff }}"
+                    title="{{ $doctor->displayName() }}" @if ($isActive) aria-current="true" @endif>
+                    <x-ui.color-dot :color="$doctorColors[$doctor->id]" />
+                    {{ $shortName }}
+                </a>
+            @endforeach
+        </nav>
+    </div>
+
+    {{-- Calendario --}}
+    @if ($isMonth)
+        @include('agenda.partials.month-grid')
+    @else
+    <x-ui.card class="overflow-hidden">
+        <div @class([
+            'grid',
+            'grid-cols-[56px_repeat(6,minmax(0,1fr))]' => ! $isDay,
+            'grid-cols-[56px_minmax(0,1fr)]' => $isDay,
+        ])>
+
+            {{-- Fila 1: encabezados de los días --}}
+            <div class="border-b border-slate-200"></div>
+            @foreach ($days as $day)
+                <div @class([
+                    'border-b border-l border-slate-200 py-3 text-center',
+                    'bg-primary-50 text-primary-600' => $day->isToday(),
+                ])>
+                    {{-- "lun." → "LUN" (Figma no lleva punto) --}}
+                    <p class="text-[11px] uppercase">{{ rtrim($day->translatedFormat('D'), '.') }}</p>
+                    <p class="text-[18px] font-semibold">{{ $day->day }}</p>
+                </div>
+            @endforeach
+
+            {{-- Fila 2: columna de horas + una columna por día --}}
+            <div>
+                @foreach ($hours as $hour)
+                    <div class="h-[60px] pr-2 text-right font-mono text-[10px] text-slate-400">{{ $hour }}:00</div>
+                @endforeach
+            </div>
+
+            @foreach ($days as $day)
+                <div class="relative border-l border-slate-200">
+                    {{-- líneas de cada hora --}}
+                    @foreach ($hours as $hour)
+                        <div class="h-[60px] border-b border-slate-100"></div>
+                    @endforeach
+
+                    {{-- citas de este día --}}
+                    @foreach ($appointmentsByDay[$day->toDateString()] ?? [] as $appointment)
+                        <x-agenda.appointment-card :appointment="$appointment" :color="$doctorColors[$appointment->doctor_member_id] ?? 'slate'" />
+                    @endforeach
+                </div>
+            @endforeach
+        </div>
+    </x-ui.card>
+    @endif
+
+    @push('modals')
+        @include('agenda.partials.create-modal')
+        @include('agenda.partials.detail-modal')
+        @include('agenda.partials.reschedule-modal')
+        @include('agenda.partials.cancel-modal')
+        @include('agenda.partials.start-modal')
+    @endpush
+</x-layouts.app>

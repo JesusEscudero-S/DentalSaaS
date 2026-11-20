@@ -6,6 +6,7 @@ use App\Enums\PatientStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Patients\StorePatientRequest;
 use App\Http\Requests\Patients\UpdatePatientRequest;
+use App\Models\MedicalRecord;
 use App\Models\OrganizationMember;
 use App\Models\Patient;
 use App\Services\Patients\PatientService;
@@ -62,6 +63,7 @@ class PatientController extends Controller
 
         return view('patients.show', [
             'patient' => $patient,
+            'record' => MedicalRecord::firstOrCreate(['patient_id' => $patient->id]),   // RN-E1 (módulo 6)
             'doctors' => $this->doctors(),
             'summary' => $this->summary($patient, $balance),
         ]);
