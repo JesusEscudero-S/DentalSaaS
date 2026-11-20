@@ -22,8 +22,9 @@
             ['key' => 'recetas', 'label' => 'Recetas', 'icon' => 'nav-recetas', 'href' => null],
             ['key' => 'presupuestos', 'label' => 'Presupuestos', 'icon' => 'nav-presupuestos', 'href' => null],
             ['key' => 'facturacion', 'label' => 'Facturación', 'icon' => 'nav-facturacion', 'href' => null],
-            ['key' => 'finanzas', 'label' => 'Finanzas', 'icon' => null, 'href' => null],
+            ['key' => 'finanzas', 'label' => 'Finanzas', 'icon' => null, 'href' => Route::has('finances.index') ? route('finances.index') : null],
             ['key' => 'inventario', 'label' => 'Inventario', 'icon' => 'nav-inventario', 'href' => null],
+            ['key' => 'documentos', 'label' => 'Documentos', 'icon' => null, 'href' => Route::has('documents.index') ? route('documents.index') : null],
         ];
     @endphp
 
@@ -51,6 +52,10 @@
                     ])>
                     @if ($item['icon'])
                         <x-ui.icon :name="$item['icon']" :size="18" />
+                    @elseif ($item['key'] === 'documentos')
+                        <svg class="size-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="#33363F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2" />
+                        </svg>
                     @else
                         <svg class="size-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="#33363F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                             <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" />
