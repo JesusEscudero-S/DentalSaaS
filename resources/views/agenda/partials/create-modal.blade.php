@@ -14,8 +14,10 @@
         @csrf
 
         <div class="flex flex-col gap-4">
-            <x-ui.select name="patient_id" label="Paciente" required :bag="$bag"
-                :options="$patientOptions" placeholder="Busca un paciente por nombre o folio" />
+            {{-- Select con buscador: escribe parte del nombre o del folio --}}
+            <x-ui.combobox name="patient_id" label="Paciente" required :bag="$bag"
+                :options="$patientOptions" placeholder="Busca un paciente por nombre o folio"
+                empty="Ningún paciente activo coincide" />
 
             <x-ui.select name="doctor_member_id" label="Doctor" required :bag="$bag"
                 :options="$doctorOptions" placeholder="Selecciona un doctor" />

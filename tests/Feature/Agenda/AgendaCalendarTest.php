@@ -99,6 +99,17 @@ class AgendaCalendarTest extends AgendaTestCase
         $this->assertSame(AppointmentStatus::Pendiente, Appointment::withoutGlobalScopes()->find($foreign->id)->status);
     }
 
+    public function test_new_appointment_modal_has_a_patient_search_with_only_active_patients(): void
+    {
+        $this->createPatient($this->staff, ['full_name' => 'PACIENTE INACTIVO'])->update(['status' => 'inactive']);
+
+        $this->actingAsMember($this->staff)->get('/agenda')
+            ->assertSee('role="combobox"', false)
+            ->assertSee('Busca un paciente por nombre o folio')
+            ->assertSee('PACIENTE DE PRUEBA')
+            ->assertDontSee('PACIENTE INACTIVO');
+    }
+
     public function test_card_position_matches_its_time_and_duration(): void
     {
         $appointment = $this->appointment(now()->addDay()->setTime(9, 30), 90);
