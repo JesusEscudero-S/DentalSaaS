@@ -4,9 +4,13 @@ namespace App\Services\Agenda;
 
 use App\Enums\AppointmentStatus;
 use App\Models\Appointment;
+use App\Models\Branch;
 use App\Models\OrganizationMember;
+use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class AgendaService
 {
@@ -105,5 +109,58 @@ class AgendaService
             ->values()
             ->mapWithKeys(fn ($doctor, $i) => [$doctor->id => $palette[$i % count($palette)]])
             ->all();
+    }
+
+    /**
+     * RF 4.1: agenda una cita nueva.
+     * RN-C1 (cero empalmes): el doctor no puede tener otra cita activa que se cruce con este horario.
+     *
+     * @param  array{patient_id: string, doctor_member_id: string, date: string, start_time: string, duration_minutes: int|string, notes: string}  $data
+     */
+    public function create(array $data, User $actor): Appointment
+    {
+        $start = Carbon::parse($data['date'].' '.$data['start_time']);
+        $end = $start->copy()->addMinutes((int) $data['duration_minutes']);
+
+        return DB::transaction(function () use ($data, $actor, $start, $end) {
+            // 1) ¿El doctor ya tiene una cita que se empalme?
+            //    Se empalman si la existente empieza antes de que termine la nueva
+            //    Y termina después de que empieza la nueva.
+            $clash = Appointment::query()
+                ->where('doctor_member_id', $data['doctor_member_id'])
+                ->whereIn('status', array_map(fn (AppointmentStatus $s) => $s->value, AppointmentStatus::blocking()))
+                ->where('starts_at', '<', $end)
+                ->where('ends_at', '>', $start)
+                ->lockForUpdate()   // dos recepcionistas al mismo tiempo: la segunda espera y ve el empalme
+                ->exists();
+
+            if ($clash) {
+                throw ValidationException::withMessages([
+                    'start_time' => 'Horario no disponible para el odontólogo seleccionado.',
+                ])->errorBag('createAppointment');
+            }
+
+            // 2) Crear la cita (organization_id lo pone BelongsToOrganization).
+            $appointment = Appointment::create([
+                'branch_id' => Branch::where('is_main', true)->value('id'),
+                'patient_id' => $data['patient_id'],
+                'doctor_member_id' => $data['doctor_member_id'],
+                'starts_at' => $start,
+                'ends_at' => $end,
+                'status' => AppointmentStatus::Pendiente,
+                'notes' => trim($data['notes']),
+                'created_by' => $actor->id,
+            ]);
+
+            // 3) Historial: la cita "nace" en Pendiente (no tenía estado antes).
+            $appointment->statusHistory()->create([
+                'organization_id' => $appointment->organization_id,
+                'from_status' => null,
+                'to_status' => AppointmentStatus::Pendiente,
+                'actor_user_id' => $actor->id,
+            ]);
+
+            return $appointment;
+        });
     }
 }
