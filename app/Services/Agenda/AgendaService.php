@@ -144,7 +144,7 @@ class AgendaService
         [$start, $end] = $this->range($data);
 
         return DB::transaction(function () use ($data, $actor, $start, $end) {
-            $this->assertNoClash($data['doctor_member_id'], $start, $end, 'createAppointment');
+            $this->assertNoClash($data['doctor_member_id'], $data['patient_id'], $start, $end, 'createAppointment');
 
             // organization_id lo pone BelongsToOrganization.
             $appointment = Appointment::create([
@@ -183,7 +183,7 @@ class AgendaService
                 throw new DomainException('Solo se pueden reagendar citas pendientes o confirmadas.');
             }
 
-            $this->assertNoClash($data['doctor_member_id'], $start, $end, 'rescheduleAppointment', ignoreId: $appointment->id);
+            $this->assertNoClash($data['doctor_member_id'], $appointment->patient_id, $start, $end, 'rescheduleAppointment', ignoreId: $appointment->id);
 
             $oldStart = $appointment->starts_at->copy();
 
@@ -265,23 +265,33 @@ class AgendaService
 
     /**
      * RN-C1: ¿el doctor tiene otra cita activa que se cruce con [$start, $end)?
+     * Y además: ¿el paciente ya tiene otra cita a esa hora (aunque sea con otro doctor)?
+     *
      * Dos citas se empalman si una empieza antes de que termine la otra Y termina después de que la otra empieza.
+     * Una sola consulta trae las citas que chocan con el doctor O con el paciente; luego se ve cuál fue.
      * Con lockForUpdate(), si dos personas agendan al mismo tiempo, la segunda espera y sí ve el empalme.
      */
-    private function assertNoClash(string $doctorId, Carbon $start, Carbon $end, string $errorBag, ?string $ignoreId = null): void
+    private function assertNoClash(string $doctorId, string $patientId, Carbon $start, Carbon $end, string $errorBag, ?string $ignoreId = null): void
     {
-        $clash = Appointment::query()
-            ->where('doctor_member_id', $doctorId)
+        $clashes = Appointment::query()
             ->whereIn('status', AppointmentStatus::blockingValues())
             ->where('starts_at', '<', $end)
             ->where('ends_at', '>', $start)
+            // Los paréntesis importan: (doctor = X OR paciente = Y). Sin el closure, el OR se "comería" los filtros de arriba.
+            ->where(fn ($query) => $query->where('doctor_member_id', $doctorId)->orWhere('patient_id', $patientId))
             ->when($ignoreId, fn ($query) => $query->whereKeyNot($ignoreId))   // al reagendar, no chocar consigo misma
             ->lockForUpdate()
-            ->exists();
+            ->get(['id', 'doctor_member_id', 'patient_id', 'starts_at', 'ends_at']);
 
-        if ($clash) {
+        if ($clashes->contains('doctor_member_id', $doctorId)) {
             throw ValidationException::withMessages([
                 'start_time' => 'Horario no disponible para el odontólogo seleccionado.',
+            ])->errorBag($errorBag);
+        }
+
+        if ($clash = $clashes->firstWhere('patient_id', $patientId)) {
+            throw ValidationException::withMessages([
+                'start_time' => "El paciente ya tiene una cita de {$clash->starts_at->format('H:i')} a {$clash->ends_at->format('H:i')} en ese horario.",
             ])->errorBag($errorBag);
         }
     }

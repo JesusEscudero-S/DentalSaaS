@@ -82,9 +82,32 @@ class AppointmentActionsTest extends AgendaTestCase
         $this->actingAsMember($this->staff)->post('/agenda/citas', $this->newAppointmentData(['start_time' => '11:00']))->assertSessionHasNoErrors();
         // Sobre una cancelada
         $this->actingAsMember($this->staff)->post('/agenda/citas', $this->newAppointmentData(['start_time' => '12:00']))->assertSessionHasNoErrors();
-        // Otro doctor a la misma hora
+        // Otro doctor a la misma hora (con otro paciente: el mismo paciente no puede estar en dos citas a la vez)
         $other = $this->member($this->staff->organization, doctor: true);
-        $this->actingAsMember($this->staff)->post('/agenda/citas', $this->newAppointmentData(['start_time' => '10:00', 'doctor_member_id' => $other->id]))->assertSessionHasNoErrors();
+        $otherPatient = $this->createPatient($this->staff);
+        $this->actingAsMember($this->staff)->post('/agenda/citas', $this->newAppointmentData(['start_time' => '10:00', 'doctor_member_id' => $other->id, 'patient_id' => $otherPatient->id]))->assertSessionHasNoErrors();
+    }
+
+    public function test_a_patient_cannot_have_two_appointments_at_the_same_time(): void
+    {
+        $date = $this->newAppointmentData()['date'];
+        $this->appointment(Carbon::parse("$date 10:00"));   // 10:00–11:00 con $this->doctor
+        $other = $this->member($this->staff->organization, doctor: true);
+
+        // Mismo paciente, otro doctor, se cruza a las 10:30 → rechazada.
+        $this->actingAsMember($this->staff)->post('/agenda/citas', $this->newAppointmentData(['start_time' => '10:30', 'doctor_member_id' => $other->id]))
+            ->assertSessionHasErrors(['start_time' => 'El paciente ya tiene una cita de 10:00 a 11:00 en ese horario.'], null, 'createAppointment');
+
+        // Otro paciente con ese doctor a la misma hora → sí se puede.
+        $otherPatient = $this->createPatient($this->staff);
+        $this->actingAsMember($this->staff)->post('/agenda/citas', $this->newAppointmentData(['start_time' => '10:30', 'doctor_member_id' => $other->id, 'patient_id' => $otherPatient->id]))
+            ->assertSessionHasNoErrors();
+
+        // Al reagendar también se revisa: mover la cita del otro paciente encima no choca, pero la de $this->patient sí.
+        $second = $this->appointment(Carbon::parse("$date 15:00"), doctor: $other);
+        $this->actingAsMember($this->staff)->put("/agenda/citas/{$second->id}/reagendar", [
+            'doctor_member_id' => $other->id, 'date' => $date, 'start_time' => '09:30', 'duration_minutes' => 60,
+        ])->assertSessionHasErrors(['start_time'], null, 'rescheduleAppointment');
     }
 
     // ── Reagendar (RF 4.3) ──────────────────────────────────────
