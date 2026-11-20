@@ -13,33 +13,62 @@ class AgendaController extends Controller
     public function __construct(private AgendaService $agenda) {}
 
     /**
-     * Calendario semanal. La semana y el doctor llegan por la URL:
-     * /agenda?semana=2026-11-23&doctor=<uuid>  (ambos opcionales).
+     * Calendario. Todo el estado vive en la URL (todos los parámetros son opcionales):
+     *   /agenda?semana=2026-11-23&doctor=<uuid>          vista Semana (lunes a sábado)
+     *   /agenda?vista=dia&fecha=2026-11-19&doctor=<uuid>  vista Día
      */
     public function index(Request $request): View
     {
         // 1) Validar lo que llega en la URL: nunca confiar en ella.
         $filters = $request->validate([
+            'vista' => ['nullable', 'in:semana,dia'],
             'semana' => ['nullable', 'date'],
+            'fecha' => ['nullable', 'date'],
             'doctor' => ['nullable', 'uuid'],
         ]);
 
-        // 2) Semana a mostrar: la de la URL o la actual, siempre desde su lunes.
-        $weekStart = Carbon::parse($filters['semana'] ?? 'today')->startOfWeek();
-        $weekEnd = $weekStart->copy()->addDays(5)->endOfDay();   // sábado 23:59:59
+        $view = $filters['vista'] ?? 'semana';
         $doctorId = $filters['doctor'] ?? null;
 
-        // 3) Citas de la semana (filtradas por doctor si se eligió uno), agrupadas por día.
+        // 2) Rango de fechas según la vista.
+        if ($view === 'dia') {
+            $rangeStart = Carbon::parse($filters['fecha'] ?? 'today')->startOfDay();
+            $rangeEnd = $rangeStart->copy()->endOfDay();
+            $days = [$rangeStart];
+            $prev = $rangeStart->copy()->subDay();
+            $next = $rangeStart->copy()->addDay();
+        } else {
+            $rangeStart = Carbon::parse($filters['semana'] ?? 'today')->startOfWeek();
+            $rangeEnd = $rangeStart->copy()->addDays(5)->endOfDay();   // sábado 23:59:59
+            $days = $this->agenda->weekDays($rangeStart);
+            $prev = $rangeStart->copy()->subWeek();
+            $next = $rangeStart->copy()->addWeek();
+        }
+
+        // 3) Citas del rango (filtradas por doctor si se eligió uno), agrupadas por día.
         $appointmentsByDay = $this->agenda
-            ->weekAppointments($weekStart, $weekEnd, $doctorId)
+            ->weekAppointments($rangeStart, $rangeEnd, $doctorId)
             ->groupBy(fn ($appointment) => $appointment->starts_at->toDateString());   // "2026-11-16"
 
         $doctors = $this->agenda->doctors();
 
+        // 4) Enlaces de la barra. Se arman aquí para que la vista solo los use.
+        //    Un parámetro en null no aparece en la URL.
+        $url = function (Carbon $date, ?string $mode = null, ?string $doctor = null) use ($view): string {
+            $mode ??= $view;   // si no se indica, la vista actual
+
+            $params = $mode === 'dia'
+                ? ['vista' => 'dia', 'fecha' => $date->toDateString()]
+                : ['semana' => $date->toDateString()];
+
+            return route('agenda.index', [...$params, 'doctor' => $doctor]);
+        };
+
         return view('agenda.index', [
-            'weekStart' => $weekStart,
-            'weekEnd' => $weekEnd,
-            'days' => $this->agenda->weekDays($weekStart),
+            'view' => $view,
+            'rangeStart' => $rangeStart,
+            'rangeEnd' => $rangeEnd,
+            'days' => $days,
             'hours' => $this->agenda->hours(),
             'appointmentsByDay' => $appointmentsByDay,
 
@@ -47,8 +76,12 @@ class AgendaController extends Controller
             'doctors' => $doctors,
             'doctorColors' => $this->agenda->doctorColors($doctors),
             'doctorId' => $doctorId,
-            'prevWeek' => $weekStart->copy()->subWeek()->toDateString(),
-            'nextWeek' => $weekStart->copy()->addWeek()->toDateString(),
+            'prevUrl' => $url($prev, doctor: $doctorId),
+            'nextUrl' => $url($next, doctor: $doctorId),
+            'todayUrl' => $url(today(), doctor: $doctorId),
+            'weekViewUrl' => $url($rangeStart, 'semana', $doctorId),
+            'dayViewUrl' => $url($view === 'dia' ? $rangeStart : ($rangeStart->isSameWeek(today()) ? today() : $rangeStart), 'dia', $doctorId),
+            'doctorUrl' => fn (?string $doctor) => $url($rangeStart, doctor: $doctor),
 
             // Modal "Nueva cita"
             'patients' => $this->agenda->activePatients(),

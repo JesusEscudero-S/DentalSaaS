@@ -1,12 +1,29 @@
-{{-- Figma: Citas y agenda / Shell (calendario semanal) --}}
+{{-- Figma: Citas y agenda / Shell (calendario). Vista Semana (lunes a sábado) o Día. --}}
+@php
+    $isDay = $view === 'dia';
+
+    $subtitle = $isDay
+        ? ucfirst($rangeStart->translatedFormat('l j \d\e F Y'))
+        : 'Semana del '.$rangeStart->format('j').' - '.$rangeEnd->translatedFormat('j \d\e F Y');
+
+    $rangeLabel = $isDay
+        ? $rangeStart->translatedFormat('D j M Y')
+        : $rangeStart->format('j').' - '.$rangeEnd->translatedFormat('j F Y');
+
+    // Clases repetidas de la barra
+    $navButton = 'flex size-8 items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50';
+    $chip = 'flex h-8 items-center gap-1.5 rounded-full border px-3 text-[12px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50';
+    $chipOn = 'border-primary-600 bg-primary-50 text-primary-600';
+    $chipOff = 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50';
+    $segment = 'rounded-md px-3 py-1 transition-colors';
+@endphp
+
 <x-layouts.app title="Agenda" active="agenda" :breadcrumbs="['Agenda' => null]">
     {{-- Encabezado --}}
     <div class="flex items-start justify-between gap-6 pb-5">
         <div class="py-[3px]">
             <h1 class="text-h1 text-slate-900">Agenda</h1>
-            <p class="pt-[3px] text-body font-semibold text-slate-400">
-                Semana del {{ $weekStart->format('j') }} - {{ $weekEnd->translatedFormat('j \d\e F Y') }}
-            </p>
+            <p class="pt-[3px] text-body font-semibold text-slate-400">{{ $subtitle }}</p>
         </div>
         <div class="flex items-center gap-2.5 p-2.5">
             <x-ui.button size="lg" x-data x-on:click="$dispatch('open-modal', { name: 'create-appointment' })">
@@ -15,50 +32,39 @@
             </x-ui.button>
         </div>
     </div>
-    
-    {{-- Barra: navegación de semanas, vista y filtro por doctor (Figma) --}}
-    @php
-        $navButton = 'flex size-8 items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50';
-        $chip = 'flex h-8 items-center gap-1.5 rounded-full border px-3 text-[12px] font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50';
-        $chipOn = 'border-primary-600 bg-primary-50 text-primary-600';
-        $chipOff = 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50';
-    @endphp
 
+    {{-- Barra: navegación, vista y filtro por doctor (Figma). Las URLs las arma el controlador. --}}
     <div class="mb-4 flex flex-wrap items-center justify-between gap-4">
         <div class="flex items-center gap-2">
-            {{-- Semana anterior / siguiente: conservan el doctor elegido --}}
-            <a href="{{ route('agenda.index', ['semana' => $prevWeek, 'doctor' => $doctorId]) }}" class="{{ $navButton }}"
-                aria-label="Semana anterior">
+            <a href="{{ $prevUrl }}" class="{{ $navButton }}" aria-label="{{ $isDay ? 'Día anterior' : 'Semana anterior' }}">
                 <x-ui.icon name="expand-right" :size="20" class="rotate-180" />
             </a>
 
-            <p class="min-w-[180px] text-center text-[14px] font-semibold text-slate-900">
-                {{ $weekStart->format('j') }} - {{ $weekEnd->translatedFormat('j F Y') }}
-            </p>
+            <p class="min-w-[180px] text-center text-[14px] font-semibold text-slate-900">{{ $rangeLabel }}</p>
 
-            <a href="{{ route('agenda.index', ['semana' => $nextWeek, 'doctor' => $doctorId]) }}" class="{{ $navButton }}"
-                aria-label="Semana siguiente">
+            <a href="{{ $nextUrl }}" class="{{ $navButton }}" aria-label="{{ $isDay ? 'Día siguiente' : 'Semana siguiente' }}">
                 <x-ui.icon name="expand-right" :size="20" />
             </a>
 
-            {{-- Hoy: sin "semana" en la URL = semana actual --}}
-            <a href="{{ route('agenda.index', ['doctor' => $doctorId]) }}"
+            <a href="{{ $todayUrl }}"
                 class="flex h-8 items-center rounded-lg border border-slate-200 bg-white px-3 text-[12.5px] font-semibold text-slate-900 hover:bg-slate-50">
                 Hoy
             </a>
 
-            {{-- Día / Semana / Mes: por ahora solo Semana --}}
-            <div class="ml-2 flex rounded-lg bg-slate-100 p-0.5 text-[12.5px] font-semibold">
-                <span class="cursor-not-allowed px-3 py-1 text-slate-400" title="Próximamente">Día</span>
-                <span class="rounded-md bg-white px-3 py-1 text-slate-900 shadow-sm">Semana</span>
-                <span class="cursor-not-allowed px-3 py-1 text-slate-400" title="Próximamente">Mes</span>
-            </div>
+            {{-- Día / Semana / Mes (SegmentedControl de Figma). Mes queda para después. --}}
+            <nav class="ml-2 flex rounded-lg bg-slate-100 p-0.5 text-[12.5px] font-semibold" aria-label="Vista del calendario">
+                <a href="{{ $dayViewUrl }}" @class([$segment, 'bg-white text-slate-900 shadow-sm' => $isDay, 'text-slate-500 hover:text-slate-900' => ! $isDay])
+                    @if ($isDay) aria-current="true" @endif>Día</a>
+                <a href="{{ $weekViewUrl }}" @class([$segment, 'bg-white text-slate-900 shadow-sm' => ! $isDay, 'text-slate-500 hover:text-slate-900' => $isDay])
+                    @if (! $isDay) aria-current="true" @endif>Semana</a>
+                <span class="{{ $segment }} cursor-not-allowed text-slate-400" title="Próximamente">Mes</span>
+            </nav>
         </div>
 
         {{-- Chips de doctor: el punto tiene el mismo color que sus tarjetas --}}
         <nav class="flex flex-wrap items-center gap-2" aria-label="Filtrar por doctor">
-            <a href="{{ route('agenda.index', ['semana' => $weekStart->toDateString()]) }}"
-                class="{{ $chip }} {{ $doctorId ? $chipOff : $chipOn }}" @if (! $doctorId) aria-current="true" @endif>
+            <a href="{{ $doctorUrl(null) }}" class="{{ $chip }} {{ $doctorId ? $chipOff : $chipOn }}"
+                @if (! $doctorId) aria-current="true" @endif>
                 Todos
             </a>
 
@@ -68,9 +74,8 @@
                     $shortName = explode(' ', $doctor->displayName())[1] ?? $doctor->displayName();
                     $isActive = $doctorId === $doctor->id;
                 @endphp
-                <a href="{{ route('agenda.index', ['semana' => $weekStart->toDateString(), 'doctor' => $doctor->id]) }}"
-                    class="{{ $chip }} {{ $isActive ? $chipOn : $chipOff }}" title="{{ $doctor->displayName() }}"
-                    @if ($isActive) aria-current="true" @endif>
+                <a href="{{ $doctorUrl($doctor->id) }}" class="{{ $chip }} {{ $isActive ? $chipOn : $chipOff }}"
+                    title="{{ $doctor->displayName() }}" @if ($isActive) aria-current="true" @endif>
                     <x-ui.color-dot :color="$doctorColors[$doctor->id]" />
                     {{ $shortName }}
                 </a>
@@ -78,9 +83,13 @@
         </nav>
     </div>
 
-    {{-- Calendario semanal --}}
+    {{-- Calendario --}}
     <x-ui.card class="overflow-hidden">
-        <div class="grid grid-cols-[56px_repeat(6,minmax(0,1fr))]">
+        <div @class([
+            'grid',
+            'grid-cols-[56px_repeat(6,minmax(0,1fr))]' => ! $isDay,
+            'grid-cols-[56px_minmax(0,1fr)]' => $isDay,
+        ])>
 
             {{-- Fila 1: encabezados de los días --}}
             <div class="border-b border-slate-200"></div>
@@ -120,5 +129,9 @@
 
     @push('modals')
         @include('agenda.partials.create-modal')
+        @include('agenda.partials.detail-modal')
+        @include('agenda.partials.reschedule-modal')
+        @include('agenda.partials.cancel-modal')
+        @include('agenda.partials.start-modal')
     @endpush
 </x-layouts.app>
