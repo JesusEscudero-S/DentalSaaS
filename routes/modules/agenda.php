@@ -12,6 +12,7 @@ Route::prefix('agenda')->name('agenda.')->group(function () {
     // Citas
     Route::post('/citas', [AppointmentController::class, 'store'])->name('appointments.store');
     Route::put('/citas/{appointment}/reagendar', [AppointmentController::class, 'reschedule'])->name('appointments.reschedule');
+    Route::patch('/citas/{appointment}/confirmar', [AppointmentController::class, 'confirm'])->name('appointments.confirm');
     Route::patch('/citas/{appointment}/cancelar', [AppointmentController::class, 'cancel'])->name('appointments.cancel');
     Route::patch('/citas/{appointment}/iniciar', [AppointmentController::class, 'start'])->name('appointments.start');
     Route::patch('/citas/{appointment}/finalizar', [AppointmentController::class, 'finish'])->name('appointments.finish');

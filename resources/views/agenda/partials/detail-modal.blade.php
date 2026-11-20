@@ -28,7 +28,7 @@
 
     {{-- Acciones. Cada botón cierra este modal y abre el de su acción con el mismo payload. --}}
     <div class="flex flex-wrap items-center justify-between gap-3"
-        x-show="payload.canCancel || payload.canReschedule || payload.canStart || payload.canFinish || payload.canNoShow">
+        x-show="payload.canCancel || payload.canConfirm || payload.canReschedule || payload.canStart || payload.canFinish || payload.canNoShow">
         <div class="flex gap-3">
             <span x-show="payload.canCancel"
                 x-on:click="$dispatch('close-modal', 'appointment-detail'); $dispatch('open-modal', { ...payload, name: 'cancel-appointment' })">
@@ -44,6 +44,13 @@
         </div>
 
         <div class="flex gap-3">
+            {{-- pendiente → confirmada (el paciente avisó que sí viene) --}}
+            <form method="POST" :action="payload.urls?.confirm" x-show="payload.canConfirm">
+                @csrf
+                @method('PATCH')
+                <x-ui.button type="submit" variant="secondary">Confirmar</x-ui.button>
+            </form>
+
             <span x-show="payload.canReschedule"
                 x-on:click="$dispatch('close-modal', 'appointment-detail'); $dispatch('open-modal', { ...payload, name: 'reschedule-appointment' })">
                 <x-ui.button variant="secondary">Reagendar</x-ui.button>

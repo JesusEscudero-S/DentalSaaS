@@ -14,7 +14,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 /**
- * Operaciones sobre citas: crear, reagendar, cancelar, iniciar, finalizar y "No asistió".
+ * Operaciones sobre citas: crear, reagendar, confirmar, cancelar, iniciar, finalizar y "No asistió".
  * Ver el calendario es responsabilidad de AgendaController.
  *
  * El {appointment} de la URL se resuelve con route model binding: el filtro por clínica
@@ -49,6 +49,16 @@ class AppointmentController extends Controller
             $this->agenda->cancel($appointment, $request->validated('reason'), $request->user());
 
             return back()->with('toast', $this->toast('Estatus de cita cambiado a Cancelada', $appointment));   // mensaje del PDF
+        });
+    }
+
+    /** Confirmar la cita (el paciente avisó que sí asistirá). */
+    public function confirm(Request $request, Appointment $appointment): RedirectResponse
+    {
+        return $this->attempt(function () use ($request, $appointment) {
+            $this->agenda->confirm($appointment, $request->user());
+
+            return back()->with('toast', $this->toast('Cita confirmada', $appointment));
         });
     }
 

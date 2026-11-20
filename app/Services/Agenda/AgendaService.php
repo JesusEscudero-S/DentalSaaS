@@ -201,6 +201,12 @@ class AgendaService
         });
     }
 
+    /** Confirmar: el paciente confirmó que sí asistirá (pendiente → confirmada). */
+    public function confirm(Appointment $appointment, User $actor): Appointment
+    {
+        return $this->changeStatus($appointment, AppointmentStatus::Confirmada, $actor);
+    }
+
     /** Iniciar: el paciente pasa al consultorio (pendiente/confirmada → en curso). */
     public function start(Appointment $appointment, User $actor): Appointment
     {

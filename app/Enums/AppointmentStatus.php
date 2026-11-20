@@ -45,6 +45,8 @@ enum AppointmentStatus: string
     /**
      * Máquina de estados: a qué estados se puede pasar desde el actual.
      *
+     *   pendiente ──Confirmar──► confirmada
+     *
      *   pendiente / confirmada ──Iniciar──► en_curso ──Finalizar──► completada
      *          │                               │
      *          ├──Cancelar──► cancelada ◄──────┘
@@ -55,7 +57,8 @@ enum AppointmentStatus: string
     public function canTransitionTo(self $to): bool
     {
         return in_array($to, match ($this) {
-            self::Pendiente, self::Confirmada => [self::EnCurso, self::Cancelada, self::NoAsistio],
+            self::Pendiente => [self::Confirmada, self::EnCurso, self::Cancelada, self::NoAsistio],
+            self::Confirmada => [self::EnCurso, self::Cancelada, self::NoAsistio],
             self::EnCurso => [self::Completada, self::Cancelada],
             default => [],
         }, true);

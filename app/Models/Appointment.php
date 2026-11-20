@@ -101,6 +101,7 @@ class Appointment extends Model
 
             // Qué botones se muestran (máquina de estados del enum)
             'canReschedule' => $status->canReschedule(),
+            'canConfirm' => $status->canTransitionTo(AppointmentStatus::Confirmada),
             'canStart' => $status->canTransitionTo(AppointmentStatus::EnCurso),
             'canFinish' => $status->canTransitionTo(AppointmentStatus::Completada),
             'canCancel' => $status->canTransitionTo(AppointmentStatus::Cancelada),
@@ -117,6 +118,7 @@ class Appointment extends Model
             // A dónde envía cada botón
             'urls' => [
                 'reschedule' => route('agenda.appointments.reschedule', $this),
+                'confirm' => route('agenda.appointments.confirm', $this),
                 'cancel' => route('agenda.appointments.cancel', $this),
                 'start' => route('agenda.appointments.start', $this),
                 'finish' => route('agenda.appointments.finish', $this),

@@ -139,6 +139,23 @@ class AppointmentActionsTest extends AgendaTestCase
         $this->assertSame('Se enfermó', $this->history($appointment)->last()->reason);
     }
 
+    // ── Confirmar ───────────────────────────────────────────────
+
+    public function test_confirms_a_pending_appointment_only_once(): void
+    {
+        $appointment = $this->appointment(now()->addDay()->setTime(10, 0));
+
+        $this->actingAsMember($this->staff)->patch("/agenda/citas/{$appointment->id}/confirmar")
+            ->assertSessionHas('toast.title', 'Cita confirmada');
+        $this->assertSame(AppointmentStatus::Confirmada, $appointment->fresh()->status);
+        $this->assertSame(AppointmentStatus::Confirmada, $this->history($appointment)->last()->to_status);
+
+        // Ya confirmada: confirmar otra vez no está permitido (pero iniciar sí).
+        $this->actingAsMember($this->staff)->patch("/agenda/citas/{$appointment->id}/confirmar")
+            ->assertSessionHas('toast.type', 'error');
+        $this->assertTrue(AppointmentStatus::Confirmada->canTransitionTo(AppointmentStatus::EnCurso));
+    }
+
     // ── Iniciar / Finalizar y máquina de estados ────────────────
 
     public function test_start_and_finish_follow_the_state_machine(): void

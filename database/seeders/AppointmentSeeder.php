@@ -49,9 +49,13 @@ class AppointmentSeeder extends Seeder
                 'doctor_member_id' => $doctor->id,
                 'starts_at' => $startsAt,
                 'ends_at' => $endsAt,
-                // Días anteriores: completadas. Hoy y después: pendientes (las de hoy que ya pasaron
-                // aparecen con "Retraso", para ver la regla RN-C5).
-                'status' => $startsAt->lt(today()) ? AppointmentStatus::Completada : AppointmentStatus::Pendiente,
+                // Días anteriores: completadas. Hoy y después: pendientes, y una de cada tres confirmada
+                // (las de hoy que ya pasaron aparecen con "Retraso", para ver la regla RN-C5).
+                'status' => match (true) {
+                    $startsAt->lt(today()) => AppointmentStatus::Completada,
+                    $startsAt->gt(today()->endOfDay()) && $i % 3 === 0 => AppointmentStatus::Confirmada,
+                    default => AppointmentStatus::Pendiente,
+                },
                 'notes' => $reason,
             ]);
 
