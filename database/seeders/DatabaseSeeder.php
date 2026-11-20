@@ -12,6 +12,7 @@ class DatabaseSeeder extends Seeder
             DemoOrganizationSeeder::class,
             PatientSeeder::class,
             AppointmentSeeder::class,
+            RecordSeeder::class,
         ]);
     }
 }

@@ -26,6 +26,9 @@
         <dd class="text-slate-900" x-text="payload.status"></dd>
     </dl>
 
+    {{-- Módulo 6: ir al expediente (con la cita ya relacionada si la consulta empezó o terminó) --}}
+    <a :href="payload.urls?.record" class="-mt-2 self-start text-body-md font-semibold text-primary-600 hover:underline">Abrir expediente →</a>
+
     {{-- Acciones. Cada botón cierra este modal y abre el de su acción con el mismo payload. --}}
     <div class="flex flex-wrap items-center justify-between gap-3"
         x-show="payload.canCancel || payload.canConfirm || payload.canReschedule || payload.canStart || payload.canFinish || payload.canNoShow">

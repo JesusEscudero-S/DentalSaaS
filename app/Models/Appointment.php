@@ -123,6 +123,11 @@ class Appointment extends Model
                 'start' => route('agenda.appointments.start', $this),
                 'finish' => route('agenda.appointments.finish', $this),
                 'noShow' => route('agenda.appointments.no-show', $this),
+                // Módulo 6: si la consulta ya empezó o terminó, abre una nota SOAP ligada a esta cita;
+                // si no, el perfil del paciente.
+                'record' => in_array($status, [AppointmentStatus::EnCurso, AppointmentStatus::Completada], true)
+                    ? route('records.notes.create', [$this->patient_id, 'cita' => $this->id])
+                    : route('patients.show', $this->patient_id),
             ],
         ];
     }
