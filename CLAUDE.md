@@ -165,7 +165,9 @@ tests/Feature/<Modulo>/
   (color), `status-badge` (active/inactive), `avatar` (size sm|md|lg, color), `table` + `table-row`
   (hover muestra las acciones ver/editar/eliminar), `pagination` (ButtonArrow/ButtonNumber), `modal`
   (+ ModalHeader/ModalFooter default|danger), `toast` (success|error|info), `tabs`, `checkbox`,
-  `switch`, `card`. Los estados hover/focus/disabled se resuelven con clases de Tailwind
+  `switch`, `card`, `combobox` (select con buscador: mismas props que `select`; la lógica está en
+  `resources/js/combobox.js` como `Alpine.data('combobox')`, ignora mayúsculas y acentos). Los estados
+  hover/focus/disabled se resuelven con clases de Tailwind
   (`hover:`, `focus-visible:`, `disabled:`, `aria-invalid:`), no con componentes duplicados.
 - Antes de crear un componente nuevo, revisar si ya existe en la página `Componentes` de Figma.
 - Altas y ediciones de un registro se hacen en **modales** (overlays), como en Figma; los listados son
