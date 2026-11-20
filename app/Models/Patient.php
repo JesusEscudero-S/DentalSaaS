@@ -61,6 +61,21 @@ class Patient extends Model
         return $this->hasOne(MedicalRecord::class);
     }
 
+    public function toothFindings(): HasMany
+    {
+        return $this->hasMany(ToothFinding::class);
+    }
+
+    public function clinicalFiles(): HasMany
+    {
+        return $this->hasMany(ClinicalFile::class);
+    }
+
+    public function fluorideApplications(): HasMany
+    {
+        return $this->hasMany(FluorideApplication::class);
+    }
+
     public function consentAcceptances(): HasMany
     {
         return $this->hasMany(ConsentAcceptance::class);
