@@ -14,6 +14,7 @@ Route::middleware(['auth', 'organization'])->group(function () {
 
     require __DIR__.'/modules/pacientes.php';
     require __DIR__.'/modules/agenda.php';
+    require __DIR__.'/modules/expediente.php';
     // require __DIR__.'/modules/servicios.php';
     // ...
 });
