@@ -131,6 +131,19 @@ tests/Feature/<Modulo>/
   con `mb_strtoupper()` (nunca correos).
 - Fechas de nacimiento: `before_or_equal:today`.
 
+## Estados y acciones (patrón del módulo Agenda)
+
+- **Máquina de estados en el enum**: el enum define qué cambios son válidos (`canTransitionTo()`),
+  como `App\Enums\AppointmentStatus`. El Service lo consulta antes de cambiar el estado y lanza
+  `DomainException` si no se permite; el controlador la convierte en un toast de error (`attempt()`
+  en `AppointmentController`), nunca en una página de error.
+- Cada cambio de estado se hace en `DB::transaction()` leyendo el registro con `lockForUpdate()` y deja
+  su fila de historial (`appointment_status_history`) y su registro en `audit_log`.
+- **Modales que operan sobre un registro**: el modelo arma su payload (`toDetailArray()` con datos,
+  banderas `can*` y URLs de cada acción) y la tarjeta o fila lo envía con
+  `$dispatch('open-modal', { name, ...@js($modelo->toDetailArray()) })`. Si el formulario del modal
+  puede fallar, guardar en campos ocultos (`_action`, `_patient`…) lo necesario para reabrirlo con `old()`.
+
 ## Front (Blade)
 
 - **Tailwind CSS** vía Vite. Los tokens de Figma van en `tailwind.config.js`; nada de colores
