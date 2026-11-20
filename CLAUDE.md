@@ -56,12 +56,16 @@ archivos, preguntas) y **no escribir código hasta que se apruebe**.
   `folio_sequences` dentro de una transacción con `lockForUpdate()`. Nunca calcular `max()+1`.
 - **Dinero**: columnas `DECIMAL`; castear a `decimal:2` / `decimal:4`. Nunca `float` para importes.
 - **Datos derivados no se guardan** (ej. edad: accessor desde `birth_date`).
-- **CHECKs**: los `CHECK` del SQL solo están como comentario; la BD no los aplica. Cada regla
-  (montos > 0, FDI válido, `ends_at > starts_at`, etc.) se valida en el FormRequest/Service.
+- **CHECKs**: MySQL 8 **sí aplica** los `CHECK` que crean las migraciones (19, ej. `chk_tf_fdi`,
+  `chk_cn_signed_fields`, `chk_appt_time`; ver `information_schema.CHECK_CONSTRAINTS`). Aun así, cada
+  regla (montos > 0, FDI válido, `ends_at > starts_at`, etc.) se valida antes en el FormRequest/Service
+  para dar un mensaje en español; el CHECK es la última defensa.
 - **Migraciones**: las de `database/migrations/` son el esquema oficial; están excluidas de Pint
   (`pint.json`) para que queden idénticas. Cambios = **migración nueva** (`php artisan make:migration`).
   Hay **triggers** en la BD (documentos firmados inmutables, inventario inmutable, último administrador,
   aplicaciones de pago); si un INSERT/UPDATE falla con `SQLSTATE[45000]`, es una regla del trigger.
+  Migraciones agregadas por los módulos (acordadas con el equipo): `2026_11_20_000001_create_fluoride_applications_table`
+  (módulo 6, RF 6.6).
 - **Nombres en mayúsculas**: nombres de personas, razón social y RFC se guardan en mayúsculas.
 - **Teléfonos**: se guardan solo los 10 dígitos y se muestran con `Ui::phone()` ("55 1847 2093").
 
@@ -144,6 +148,24 @@ tests/Feature/<Modulo>/
   `$dispatch('open-modal', { name, ...@js($modelo->toDetailArray()) })`. Si el formulario del modal
   puede fallar, guardar en campos ocultos (`_action`, `_patient`…) lo necesario para reabrirlo con `old()`.
 
+## Expediente (módulo 6)
+
+- Las pestañas del expediente son páginas del perfil del paciente (`/pacientes/{patient}/historial`,
+  `/notas`, `/archivos`, `/odontograma`) y comparten `<x-records.shell>`: encabezado, alerta clínica
+  roja (RN-E3, `MedicalRecord::hasAlerts()`) y pestañas. La pestaña Resumen es `patients.show`.
+- **Nota clínica = diagnóstico dental** del PDF. Vive en una consulta (`clinical_encounters`); si se liga
+  a una cita, se reutiliza la consulta de esa cita. Borrador → editable; **firmada → inmutable**
+  (trigger) y se corrige con **adendas** numeradas. Solo firma el doctor responsable (regla de datos,
+  no de rol). Al firmar se guarda `content_hash` (SHA-256) y `verifyIntegrity()` lo comprueba.
+- **Odontograma**: un hallazgo nunca se sobrescribe; el vigente se cierra con `superseded_at` y se crea
+  otro (la BD permite uno vigente por pieza). Las piezas válidas salen de `App\Enums\Dentition`.
+- **Archivos clínicos** en el disco privado `local` (`storage/app/clinical/<clínica>/<paciente>/<uuid>.<ext>`),
+  se descargan por el controlador (nunca `public/`). Eliminar = `deleted_at`.
+- Rutas anidadas bajo `{patient}` usan `scopeBindings()` (el hijo debe ser de ese paciente → 404).
+  Si el hijo no es relación directa del paciente (notas), se comprueba en el controlador.
+- Pruebas con archivos: `Storage::fake()` y PNG real en base64 (`UploadedFile::fake()->image()` necesita
+  la extensión GD, que XAMPP no trae).
+
 ## Front (Blade)
 
 - **Tailwind CSS** vía Vite. Los tokens de Figma van en `tailwind.config.js`; nada de colores
@@ -165,7 +187,7 @@ tests/Feature/<Modulo>/
   (color), `status-badge` (active/inactive), `avatar` (size sm|md|lg, color), `table` + `table-row`
   (hover muestra las acciones ver/editar/eliminar), `pagination` (ButtonArrow/ButtonNumber), `modal`
   (+ ModalHeader/ModalFooter default|danger), `toast` (success|error|info), `tabs`, `checkbox`,
-  `switch`, `card`, `combobox` (select con buscador: mismas props que `select`; la lógica está en
+  `switch`, `card`, `textarea`, `combobox` (select con buscador: mismas props que `select`; la lógica está en
   `resources/js/combobox.js` como `Alpine.data('combobox')`, ignora mayúsculas y acentos). Los estados
   hover/focus/disabled se resuelven con clases de Tailwind
   (`hover:`, `focus-visible:`, `disabled:`, `aria-invalid:`), no con componentes duplicados.
