@@ -4,6 +4,7 @@ namespace App\Services\Agenda;
 
 use App\Enums\AppointmentStatus;
 use App\Models\Appointment;
+use App\Models\OrganizationMember;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
@@ -65,14 +66,44 @@ class AgendaService
 
     /**
      * Citas de la semana (sin las canceladas), con paciente y doctor ya cargados.
+     * Si se pasa $doctorId, solo las de ese doctor.
      */
-    public function weekAppointments(Carbon $start, Carbon $end): Collection
+    public function weekAppointments(Carbon $start, Carbon $end, ?string $doctorId = null): Collection
     {
         return Appointment::query()
             ->whereBetween('starts_at', [$start, $end])
             ->where('status', '!=', AppointmentStatus::Cancelada->value)
+            ->when($doctorId, fn ($query) => $query->where('doctor_member_id', $doctorId))
             ->with(['patient', 'doctor.user'])
             ->orderBy('starts_at')
             ->get();
+    }
+
+    /**
+     * Doctores activos de la clínica (para los chips del filtro), ordenados por nombre.
+     */
+    public function doctors(): Collection
+    {
+        return OrganizationMember::doctors()
+            ->with('user')
+            ->get()
+            ->sortBy(fn ($doctor) => $doctor->displayName())
+            ->values();
+    }
+
+    /**
+     * Un color distinto por doctor, en orden: [member_id => 'blue', ...].
+     * Lo usan los chips del filtro y las tarjetas, así ambos coinciden.
+     *
+     * @return array<string, string>
+     */
+    public function doctorColors(Collection $doctors): array
+    {
+        $palette = ['blue', 'sky', 'green', 'violet', 'amber'];
+
+        return $doctors
+            ->values()
+            ->mapWithKeys(fn ($doctor, $i) => [$doctor->id => $palette[$i % count($palette)]])
+            ->all();
     }
 }

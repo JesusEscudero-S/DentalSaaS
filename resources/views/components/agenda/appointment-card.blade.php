@@ -1,9 +1,9 @@
-{{-- Tarjeta de cita en el calendario (Figma: Appointment). --}}
-@props(['appointment'])
+{{-- Tarjeta de cita en el calendario (Figma: Appointment).
+     $color llega desde la vista (AgendaService::doctorColors) para que coincida con el chip del doctor. --}}
+@props(['appointment', 'color' => 'slate'])
 
 @php
     $pos = \App\Services\Agenda\AgendaService::position($appointment);
-    $color = \App\Support\Ui::colorFor($appointment->doctor_member_id);   // mismo color por doctor
 
     // Tailwind necesita ver las clases completas escritas en el código: por eso un mapa y no "bg-{$color}-50".
     $colors = [
