@@ -16,7 +16,16 @@ class AgendaController extends Controller
         $weekStart = now()->startOfWeek();
         $weekEnd = $weekStart->copy()->addDays(5)->endOfDay();
         $appointments = $this->agenda->weekAppointments($weekStart, $weekEnd);
+        $appointmentsByDay = $appointments->groupBy(
+            fn ($appointment) => $appointment->starts_at->toDateString()   // "2026-11-16"
+        );
 
-        return view('agenda.index', ['weekStart' => $weekStart, 'weekEnd' => $weekEnd, 'appointments' => $appointments]);
+        return view('agenda.index', [
+            'weekStart' => $weekStart,
+            'weekEnd' => $weekEnd,
+            'days' => $this->agenda->weekDays($weekStart),
+            'hours' => $this->agenda->hours(),
+            'appointmentsByDay' => $appointmentsByDay,
+        ]);
     }
 }
