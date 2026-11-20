@@ -9,13 +9,13 @@
             </p>
         </div>
         <div class="flex items-center gap-2.5 p-2.5">
-            <x-ui.button size="lg">
+            <x-ui.button size="lg" x-data x-on:click="$dispatch('open-modal', { name: 'create-appointment' })">
                 <x-ui.icon name="add" :size="16" />
                 Nueva cita
             </x-ui.button>
         </div>
     </div>
-
+    
     {{-- Barra: navegación de semanas, vista y filtro por doctor (Figma) --}}
     @php
         $navButton = 'flex size-8 items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50';
@@ -117,4 +117,8 @@
             @endforeach
         </div>
     </x-ui.card>
+
+    @push('modals')
+        @include('agenda.partials.create-modal')
+    @endpush
 </x-layouts.app>

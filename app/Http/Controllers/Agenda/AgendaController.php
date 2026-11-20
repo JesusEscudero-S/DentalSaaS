@@ -49,6 +49,9 @@ class AgendaController extends Controller
             'doctorId' => $doctorId,
             'prevWeek' => $weekStart->copy()->subWeek()->toDateString(),
             'nextWeek' => $weekStart->copy()->addWeek()->toDateString(),
+
+            // Modal "Nueva cita"
+            'patients' => $this->agenda->activePatients(),
         ]);
     }
 }

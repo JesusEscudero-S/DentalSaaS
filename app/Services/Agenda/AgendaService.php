@@ -6,6 +6,7 @@ use App\Enums\AppointmentStatus;
 use App\Models\Appointment;
 use App\Models\Branch;
 use App\Models\OrganizationMember;
+use App\Models\Patient;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -109,6 +110,12 @@ class AgendaService
             ->values()
             ->mapWithKeys(fn ($doctor, $i) => [$doctor->id => $palette[$i % count($palette)]])
             ->all();
+    }
+
+    /** Pacientes activos para el select del modal, ordenados por nombre. */
+    public function activePatients(): Collection
+    {
+        return Patient::active()->orderBy('full_name')->get(['id', 'full_name', 'folio']);
     }
 
     /**
