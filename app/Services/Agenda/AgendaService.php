@@ -51,6 +51,29 @@ class AgendaService
     }
 
     /**
+     * Vista Mes: las semanas completas (lunes a domingo) que tocan el mes, de 4 a 6 filas.
+     *
+     * @return array<int, array<int, Carbon>> [semana => [7 días]]
+     */
+    public function monthWeeks(Carbon $month): array
+    {
+        $day = $month->copy()->startOfMonth()->startOfWeek();
+        $last = $month->copy()->endOfMonth()->endOfWeek();
+        $weeks = [];
+
+        while ($day->lte($last)) {
+            $week = [];
+            for ($i = 0; $i < 7; $i++) {
+                $week[] = $day->copy();
+                $day->addDay();
+            }
+            $weeks[] = $week;
+        }
+
+        return $weeks;
+    }
+
+    /**
      * Horas que muestra el calendario: [8, 9, ..., 20].
      *
      * @return array<int, int>
@@ -81,7 +104,7 @@ class AgendaService
     }
 
     /**
-     * Citas entre dos fechas (una semana o un día), sin las canceladas: RF 4.4 dice que
+     * Citas entre dos fechas (una semana, un día o la cuadrícula del mes), sin las canceladas: RF 4.4 dice que
      * una cita cancelada libera su espacio en el calendario. Si se pasa $doctorId, solo las suyas.
      */
     public function weekAppointments(Carbon $start, Carbon $end, ?string $doctorId = null): Collection

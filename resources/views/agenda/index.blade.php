@@ -1,14 +1,22 @@
-{{-- Figma: Citas y agenda / Shell (calendario). Vista Semana (lunes a sábado) o Día. --}}
+{{-- Figma: Citas y agenda / Shell (calendario). Vista Semana (lunes a sábado), Día o Mes. --}}
 @php
     $isDay = $view === 'dia';
+    $isMonth = $view === 'mes';
+    $isWeek = ! $isDay && ! $isMonth;
 
-    $subtitle = $isDay
-        ? ucfirst($rangeStart->translatedFormat('l j \d\e F Y'))
-        : 'Semana del '.$rangeStart->format('j').' - '.$rangeEnd->translatedFormat('j \d\e F Y');
+    $subtitle = match ($view) {
+        'dia' => ucfirst($rangeStart->translatedFormat('l j \d\e F Y')),
+        'mes' => ucfirst($anchor->translatedFormat('F \d\e Y')),
+        default => 'Semana del '.$rangeStart->format('j').' - '.$rangeEnd->translatedFormat('j \d\e F Y'),
+    };
 
-    $rangeLabel = $isDay
-        ? $rangeStart->translatedFormat('D j M Y')
-        : $rangeStart->format('j').' - '.$rangeEnd->translatedFormat('j F Y');
+    $rangeLabel = match ($view) {
+        'dia' => $rangeStart->translatedFormat('D j M Y'),
+        'mes' => ucfirst($anchor->translatedFormat('F Y')),
+        default => $rangeStart->format('j').' - '.$rangeEnd->translatedFormat('j F Y'),
+    };
+
+    $unit = match ($view) { 'dia' => ['Día anterior', 'Día siguiente'], 'mes' => ['Mes anterior', 'Mes siguiente'], default => ['Semana anterior', 'Semana siguiente'] };
 
     // Clases repetidas de la barra
     $navButton = 'flex size-8 items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50';
@@ -36,13 +44,13 @@
     {{-- Barra: navegación, vista y filtro por doctor (Figma). Las URLs las arma el controlador. --}}
     <div class="mb-4 flex flex-wrap items-center justify-between gap-4">
         <div class="flex items-center gap-2">
-            <a href="{{ $prevUrl }}" class="{{ $navButton }}" aria-label="{{ $isDay ? 'Día anterior' : 'Semana anterior' }}">
+            <a href="{{ $prevUrl }}" class="{{ $navButton }}" aria-label="{{ $unit[0] }}">
                 <x-ui.icon name="expand-right" :size="20" class="rotate-180" />
             </a>
 
             <p class="min-w-[180px] text-center text-[14px] font-semibold text-slate-900">{{ $rangeLabel }}</p>
 
-            <a href="{{ $nextUrl }}" class="{{ $navButton }}" aria-label="{{ $isDay ? 'Día siguiente' : 'Semana siguiente' }}">
+            <a href="{{ $nextUrl }}" class="{{ $navButton }}" aria-label="{{ $unit[1] }}">
                 <x-ui.icon name="expand-right" :size="20" />
             </a>
 
@@ -51,13 +59,12 @@
                 Hoy
             </a>
 
-            {{-- Día / Semana / Mes (SegmentedControl de Figma). Mes queda para después. --}}
+            {{-- Día / Semana / Mes (SegmentedControl de Figma) --}}
             <nav class="ml-2 flex rounded-lg bg-slate-100 p-0.5 text-[12.5px] font-semibold" aria-label="Vista del calendario">
-                <a href="{{ $dayViewUrl }}" @class([$segment, 'bg-white text-slate-900 shadow-sm' => $isDay, 'text-slate-500 hover:text-slate-900' => ! $isDay])
-                    @if ($isDay) aria-current="true" @endif>Día</a>
-                <a href="{{ $weekViewUrl }}" @class([$segment, 'bg-white text-slate-900 shadow-sm' => ! $isDay, 'text-slate-500 hover:text-slate-900' => $isDay])
-                    @if (! $isDay) aria-current="true" @endif>Semana</a>
-                <span class="{{ $segment }} cursor-not-allowed text-slate-400" title="Próximamente">Mes</span>
+                @foreach (['Día' => [$dayViewUrl, $isDay], 'Semana' => [$weekViewUrl, $isWeek], 'Mes' => [$monthViewUrl, $isMonth]] as $text => [$href, $current])
+                    <a href="{{ $href }}" @class([$segment, 'bg-white text-slate-900 shadow-sm' => $current, 'text-slate-500 hover:text-slate-900' => ! $current])
+                        @if ($current) aria-current="true" @endif>{{ $text }}</a>
+                @endforeach
             </nav>
         </div>
 
@@ -84,6 +91,9 @@
     </div>
 
     {{-- Calendario --}}
+    @if ($isMonth)
+        @include('agenda.partials.month-grid')
+    @else
     <x-ui.card class="overflow-hidden">
         <div @class([
             'grid',
@@ -126,6 +136,7 @@
             @endforeach
         </div>
     </x-ui.card>
+    @endif
 
     @push('modals')
         @include('agenda.partials.create-modal')

@@ -76,9 +76,40 @@ class AgendaCalendarTest extends AgendaTestCase
         $this->assertSame(1, substr_count($html, 'Ver cita de PACIENTE DE PRUEBA'));
     }
 
+    public function test_month_view_shows_the_whole_month_with_counts(): void
+    {
+        $month = now()->addMonthNoOverflow()->startOfMonth();
+        $day = $month->copy()->addDays(9);                      // el día 10 del mes
+        $this->appointment($day->copy()->setTime(9, 0));
+        $this->appointment($day->copy()->setTime(11, 0));
+        $this->appointment($month->copy()->addMonthNoOverflow()->addDays(14)->setTime(9, 0));   // otro mes: no aparece
+
+        $html = $this->actingAsMember($this->staff)
+            ->get('/agenda?vista=mes&mes='.$month->format('Y-m'))
+            ->assertOk()
+            ->assertSee(ucfirst($month->translatedFormat('F \d\e Y')))
+            ->assertSee('2 citas')
+            ->assertSee('vista=dia&amp;fecha='.$day->toDateString(), false)   // el día lleva a la vista Día
+            ->getContent();
+
+        $this->assertSame(2, substr_count($html, 'Ver cita de PACIENTE DE PRUEBA'));
+    }
+
+    public function test_month_view_shows_only_three_appointments_per_day(): void
+    {
+        $day = now()->addDays(2)->startOfDay();
+        foreach ([9, 10, 11, 12, 13] as $hour) {
+            $this->appointment($day->copy()->setTime($hour, 0), 30);
+        }
+
+        $this->actingAsMember($this->staff)->get('/agenda?vista=mes&mes='.$day->format('Y-m'))
+            ->assertSee('5 citas')
+            ->assertSee('+2 más');
+    }
+
     public function test_invalid_url_parameters_do_not_break_the_page(): void
     {
-        $this->actingAsMember($this->staff)->from('/agenda')->get('/agenda?semana=hola&doctor=123')
+        $this->actingAsMember($this->staff)->from('/agenda')->get('/agenda?semana=hola&doctor=123&mes=2026-13')
             ->assertRedirect('/agenda');
     }
 

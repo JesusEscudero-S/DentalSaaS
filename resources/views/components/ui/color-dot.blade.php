@@ -9,6 +9,7 @@
         'violet' => 'bg-violet-500',
         'amber' => 'bg-amber-500',
         'slate' => 'bg-slate-400',
+        'red' => 'bg-danger-500',   // cita con retraso (RN-C5)
     ];
 @endphp
 
