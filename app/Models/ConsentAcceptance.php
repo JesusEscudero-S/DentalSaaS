@@ -29,4 +29,9 @@ class ConsentAcceptance extends Model
     {
         return $this->belongsTo(Patient::class);
     }
+
+    public function witness(): BelongsTo
+    {
+        return $this->belongsTo(OrganizationMember::class, 'witness_member_id');
+    }
 }

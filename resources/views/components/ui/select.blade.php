@@ -31,6 +31,7 @@
             @foreach ($options as $optionValue => $optionLabel)
                 <option value="{{ $optionValue }}" @selected($selected === (string) $optionValue)>{{ $optionLabel }}</option>
             @endforeach
+            {{ $slot }}
         </select>
         <x-ui.icon name="expand-down" :size="24" class="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2" />
     </div>
