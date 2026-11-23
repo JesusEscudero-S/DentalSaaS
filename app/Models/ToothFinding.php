@@ -12,9 +12,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Hallazgo del odontograma. No se sobrescribe: al cambiar el estado de una pieza se cierra el
- * hallazgo vigente (superseded_at) y se crea uno nuevo. Así queda la historia de cada diente.
+ * Hallazgo del odontograma (módulo 6). No se sobrescribe: al cambiar el estado de una pieza se cierra
+ * el hallazgo vigente (superseded_at) y se crea uno nuevo. Así queda la historia de cada diente.
  * La BD garantiza un solo hallazgo vigente por pieza (columna generada current_key + UNIQUE).
+ * Documentos lo lee para el odontograma del PDF.
  */
 class ToothFinding extends Model
 {
@@ -36,6 +37,11 @@ class ToothFinding extends Model
         'superseded_at' => 'datetime',
     ];
 
+    public function patient(): BelongsTo
+    {
+        return $this->belongsTo(Patient::class);
+    }
+
     public function author(): BelongsTo
     {
         return $this->belongsTo(OrganizationMember::class, 'author_member_id');
@@ -47,7 +53,7 @@ class ToothFinding extends Model
         return $query->whereNull('superseded_at');
     }
 
-    /** "Caries (O, M)" */
+    /** "Caries (Mesial, Oclusal)" */
     public function description(): string
     {
         $surfaces = collect($this->surfaces ?? [])

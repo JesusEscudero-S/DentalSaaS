@@ -47,7 +47,7 @@ class ClinicalFileTest extends RecordTestCase
         $this->assertSame(['estudio.pdf', 'panoramica.png'], $files->pluck('display_name')->all());
 
         foreach ($files as $file) {
-            $this->assertSame(ClinicalFileType::Radiografia, $file->file_type);
+            $this->assertSame(ClinicalFileType::XRay, $file->file_type);
             $this->assertStringStartsWith("clinical/{$this->patient->organization_id}/{$this->patient->id}/", $file->storage_key);
             $this->assertSame(64, strlen($file->sha256));
             Storage::disk(ClinicalFile::DISK)->assertExists($file->storage_key);

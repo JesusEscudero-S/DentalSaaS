@@ -52,6 +52,8 @@
                     <x-ui.button type="submit" variant="secondary">Reactivar</x-ui.button>
                 </form>
             @endif
+            {{-- Módulo Documentos: historia clínica y autorización de tratamiento de este paciente --}}
+            <x-ui.button variant="secondary" :href="route('documents.index', ['paciente' => $patient->id])">Documentos</x-ui.button>
             <span x-on:click="$dispatch('open-modal', { name: 'edit-patient', patient: @js($patient->toFormArray()), action: @js(route('patients.update', $patient)) })">
                 <x-ui.button variant="secondary">Editar datos</x-ui.button>
             </span>
