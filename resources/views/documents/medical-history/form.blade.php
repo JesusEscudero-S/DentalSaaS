@@ -170,7 +170,7 @@
                     @error('allergies', $bag)
                         <p class="text-xs text-danger-600">{{ $message }}</p>
                     @else
-                        <p class="text-xs text-slate-500">Se precarga del expediente; al guardar, el expediente del paciente se actualiza.</p>
+                        <p class="text-xs text-slate-500">Se precarga del expediente. Este documento no cambia el expediente: las alergias se editan en el perfil del paciente.</p>
                     @enderror
                 </div>
             </x-ui.card>

@@ -2,6 +2,7 @@
 
 namespace App\Enums;
 
+/** clinical_files.file_type (lo usan el Expediente y Documentos). Casos en inglés, como pide CLAUDE.md. */
 enum ClinicalFileType: string
 {
     case XRay = 'radiografia';
@@ -19,7 +20,7 @@ enum ClinicalFileType: string
         };
     }
 
-    /** @return array<string, string> */
+    /** @return array<string, string> [valor => texto] para el select */
     public static function options(): array
     {
         return collect(self::cases())->mapWithKeys(fn (self $c) => [$c->value => $c->label()])->all();

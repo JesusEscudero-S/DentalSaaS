@@ -12,6 +12,8 @@ class DatabaseSeeder extends Seeder
             DemoOrganizationSeeder::class,
             FinanceSeeder::class,
             PatientSeeder::class,
+            AppointmentSeeder::class,
+            RecordSeeder::class,
         ]);
     }
 }

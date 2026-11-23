@@ -3,10 +3,14 @@
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToOrganization;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 
-/** Catálogo de servicios odontológicos (módulo 5). */
+/**
+ * Catálogo de servicios odontológicos. Lo gestiona el módulo 5 (Servicios odontológicos);
+ * el Expediente y Documentos solo lo leen.
+ */
 class Treatment extends Model
 {
     use BelongsToOrganization, HasUuids;
@@ -20,4 +24,9 @@ class Treatment extends Model
         'duration_minutes' => 'integer',
         'price' => 'decimal:4',
     ];
+
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->where('status', 'active');
+    }
 }

@@ -17,7 +17,7 @@
         $active = $active ?? '';
         $nav = [
             ['key' => 'dashboard', 'label' => 'Dashboard', 'icon' => 'nav-dashboard', 'href' => null],
-            ['key' => 'agenda', 'label' => 'Agenda', 'icon' => 'nav-agenda', 'href' => null],
+            ['key' => 'agenda', 'label' => 'Agenda', 'icon' => 'nav-agenda', 'href' => route('agenda.index')],
             ['key' => 'pacientes', 'label' => 'Pacientes', 'icon' => 'nav-pacientes', 'href' => route('patients.index')],
             ['key' => 'recetas', 'label' => 'Recetas', 'icon' => 'nav-recetas', 'href' => null],
             ['key' => 'presupuestos', 'label' => 'Presupuestos', 'icon' => 'nav-presupuestos', 'href' => null],
@@ -89,20 +89,21 @@
 
     <div class="pl-sidebar">
         {{-- TopBar --}}
-        <header class="sticky top-0 z-20 flex h-topbar items-center justify-between border-b border-slate-200 bg-surface px-6">
-            <nav class="flex items-center gap-1.5" aria-label="Ruta">
-                <a href="{{ route('home') }}" class="text-body text-slate-500 hover:text-slate-900">Inicio</a>
+        <header class="sticky top-0 z-20 flex h-topbar items-center justify-between gap-4 border-b border-slate-200 bg-surface px-6">
+            {{-- min-w-0 + truncate: una ruta larga (nombre del paciente) se recorta con "…" en vez de empujar la barra --}}
+            <nav class="flex min-w-0 items-center gap-1.5 whitespace-nowrap" aria-label="Ruta">
+                <a href="{{ route('home') }}" class="shrink-0 text-body text-slate-500 hover:text-slate-900">Inicio</a>
                 @foreach ($breadcrumbs ?? [] as $label => $url)
-                    <x-ui.icon name="expand-right" :size="24" />
+                    <x-ui.icon name="expand-right" :size="24" class="shrink-0" />
                     @if ($url && ! $loop->last)
-                        <a href="{{ $url }}" class="text-body text-slate-500 hover:text-slate-900">{{ $label }}</a>
+                        <a href="{{ $url }}" @class(['truncate text-body text-slate-500 hover:text-slate-900', 'shrink-0' => $loop->first, 'min-w-[4rem]' => ! $loop->first])>{{ $label }}</a>
                     @else
-                        <span class="text-body-md font-bold text-slate-900">{{ $label }}</span>
+                        <span class="shrink-0 text-body-md font-bold text-slate-900">{{ $label }}</span>
                     @endif
                 @endforeach
             </nav>
 
-            <div class="flex items-center gap-3">
+            <div class="flex shrink-0 items-center gap-3">
                     <form method="GET" action="{{ route('patients.index') }}" role="search"
                         class="flex h-9 w-[272px] items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 focus-within:border-primary-600 focus-within:ring-2 focus-within:ring-primary-600/15">
                         <x-ui.icon name="search" :size="18" />

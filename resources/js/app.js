@@ -7,6 +7,8 @@ import '@fontsource/jetbrains-mono/400.css';
 import '@fontsource/jetbrains-mono/700.css';
 
 import Alpine from 'alpinejs';
+import combobox from './combobox';
 
 window.Alpine = Alpine;
+Alpine.data('combobox', combobox);
 Alpine.start();
