@@ -7,6 +7,7 @@ use App\Models\ClinicalFile;
 use App\Models\OrganizationMember;
 use App\Models\Patient;
 use App\Services\AuditLogger;
+use DomainException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -75,9 +76,17 @@ class ClinicalFileService
         return $saved;
     }
 
-    /** RF 6.8: baja lógica. El archivo físico se conserva por si hay que recuperarlo. */
+    /**
+     * RF 6.8: baja lógica. El archivo físico se conserva por si hay que recuperarlo.
+     * Los documentos generados por el módulo Documentos (y sus escaneos firmados) no se borran aquí:
+     * se gestionan allá, donde está la regla "un consentimiento firmado no se elimina".
+     */
     public function delete(ClinicalFile $file): void
     {
+        if ($file->isTemplateDocument()) {
+            throw new DomainException('Este documento se gestiona en el módulo Documentos.');
+        }
+
         DB::transaction(function () use ($file) {
             $file->delete();
             $this->audit->log($file, AuditLogger::DELETE, ['display_name' => $file->display_name]);

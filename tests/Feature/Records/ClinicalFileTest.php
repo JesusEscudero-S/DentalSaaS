@@ -6,6 +6,7 @@ use App\Enums\ClinicalFileType;
 use App\Models\ClinicalFile;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 /** RF 6.7 Subir / RF 6.8 Eliminar radiografías y archivos. */
 class ClinicalFileTest extends RecordTestCase
@@ -104,5 +105,31 @@ class ClinicalFileTest extends RecordTestCase
         Storage::disk(ClinicalFile::DISK)->assertExists($file->storage_key);   // el archivo físico se conserva
         $this->actingAsMember($this->staff)->get($this->url('archivos'))->assertSee('Sin archivos');
         $this->actingAsMember($this->staff)->get($this->url("archivos/{$file->id}"))->assertNotFound();
+    }
+
+    public function test_documents_generated_by_the_documents_module_cannot_be_deleted_from_this_tab(): void
+    {
+        // Un PDF del módulo Documentos (historia clínica) en su carpeta org/{org}/documentos/...
+        $key = "org/{$this->patient->organization_id}/documentos/historia-clinica/".Str::uuid().'/documento.pdf';
+        Storage::disk(ClinicalFile::DISK)->put($key, '%PDF-1.4 demo');
+        $document = ClinicalFile::withoutGlobalScopes()->create([
+            'organization_id' => $this->patient->organization_id,
+            'patient_id' => $this->patient->id,
+            'file_type' => ClinicalFileType::Other,
+            'display_name' => 'Historia Clínica Dental',
+            'mime_type' => 'application/pdf',
+            'size_bytes' => 13,
+            'storage_key' => $key,
+            'uploaded_by_member_id' => $this->doctor->id,
+        ]);
+
+        // Aparece en Archivos, pero con "Ver en Documentos" en vez de "Eliminar".
+        $this->actingAsMember($this->staff)->get($this->url('archivos'))
+            ->assertSee('Historia Clínica Dental')
+            ->assertSee('Ver en Documentos');
+
+        $this->actingAsMember($this->doctor)->delete($this->url("archivos/{$document->id}"))
+            ->assertSessionHas('toast.message', 'Este documento se gestiona en el módulo Documentos.');
+        $this->assertNotSoftDeleted('clinical_files', ['id' => $document->id]);
     }
 }

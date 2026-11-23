@@ -52,8 +52,10 @@ class ClinicalFileController extends RecordController
 
     public function destroy(Patient $patient, ClinicalFile $clinicalFile): RedirectResponse
     {
-        $this->files->delete($clinicalFile);
+        return $this->attempt(function () use ($clinicalFile) {
+            $this->files->delete($clinicalFile);
 
-        return back()->with('toast', $this->toast('Archivo eliminado', $clinicalFile->display_name));   // mensaje del PDF
+            return back()->with('toast', $this->toast('Archivo eliminado', $clinicalFile->display_name));   // mensaje del PDF
+        });
     }
 }

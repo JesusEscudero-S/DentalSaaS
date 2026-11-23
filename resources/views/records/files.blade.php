@@ -26,9 +26,14 @@
                 </div>
                 <div class="flex shrink-0 items-center gap-1 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
                     <x-ui.button variant="ghost" size="sm" :href="route('records.files.show', [$patient, $file])">Descargar</x-ui.button>
-                    <span x-on:click="$dispatch('open-modal', { name: 'delete-file', label: @js($file->display_name), action: @js(route('records.files.destroy', [$patient, $file])) })">
-                        <x-ui.button variant="ghost-danger" size="sm">Eliminar</x-ui.button>
-                    </span>
+                    @if ($file->isTemplateDocument())
+                        {{-- Generado por el módulo Documentos: se gestiona (y se elimina) allá --}}
+                        <x-ui.button variant="ghost" size="sm" :href="$file->template() ? route('documents.show', $file) : route('documents.index', ['paciente' => $patient->id])">Ver en Documentos</x-ui.button>
+                    @else
+                        <span x-on:click="$dispatch('open-modal', { name: 'delete-file', label: @js($file->display_name), action: @js(route('records.files.destroy', [$patient, $file])) })">
+                            <x-ui.button variant="ghost-danger" size="sm">Eliminar</x-ui.button>
+                        </span>
+                    @endif
                 </div>
             </div>
         @empty
