@@ -3,10 +3,8 @@
 namespace App\Services\Documents;
 
 use App\Enums\DocumentTemplate;
-use App\Enums\MedicalCondition;
 use App\Exceptions\BusinessRuleException;
 use App\Models\ClinicalFile;
-use App\Models\MedicalRecord;
 use App\Models\Organization;
 use App\Models\OrganizationMember;
 use App\Models\Patient;
@@ -38,16 +36,14 @@ class DocumentService
     ) {}
 
     /**
-     * Historia clínica: genera el documento y (D3) actualiza alergias y antecedentes del expediente.
+     * Historia clínica: genera el documento. No modifica el expediente: las alergias y los antecedentes
+     * de medical_records se capturan a mano en el Expediente (pestaña Resumen, RF 6.2); aquí solo se precargan.
      *
      * @param  array<string, mixed>  $answers  StoreMedicalHistoryRequest::answers()
      */
     public function generateMedicalHistory(Patient $patient, OrganizationMember $doctor, array $answers, ?ClinicalFile $previous = null): ClinicalFile
     {
-        return $this->generate(
-            DocumentTemplate::MedicalHistory, $patient, $doctor, $answers, [], $previous,
-            fn (ClinicalFile $file) => $this->syncMedicalRecord($patient, $answers, $file),
-        );
+        return $this->generate(DocumentTemplate::MedicalHistory, $patient, $doctor, $answers, [], $previous);
     }
 
     /**
@@ -241,36 +237,5 @@ class DocumentService
         );
 
         return $answers;
-    }
-
-    /** D3: el expediente (módulo 6) refleja la última historia clínica. No se audita el texto clínico. */
-    private function syncMedicalRecord(Patient $patient, array $answers, ClinicalFile $file): void
-    {
-        $record = MedicalRecord::firstOrCreate(['patient_id' => $patient->id]);
-        $record->fill([
-            'allergies' => $answers['allergies'] ?? null,
-            'medical_history' => $this->medicalHistorySummary($answers, $file),
-        ]);
-
-        $changed = array_keys($record->getDirty());
-        if ($changed) {
-            $record->save();
-            $this->audit->log($record, AuditLogger::UPDATE, ['fields' => $changed, 'document_id' => $file->id]);
-        }
-    }
-
-    private function medicalHistorySummary(array $answers, ClinicalFile $file): string
-    {
-        $conditions = collect($answers['conditions'] ?? [])
-            ->map(fn ($value) => MedicalCondition::tryFrom($value)?->label())
-            ->filter()
-            ->implode(', ');
-        $treatment = $answers['under_medical_treatment'] ?? null;
-
-        return implode("\n", [
-            'Según la historia clínica del '.Ui::date($file->created_at).':',
-            'Padecimientos: '.($conditions !== '' ? $conditions : 'ninguno').'.',
-            'Tratamiento médico actual: '.(filled($treatment) ? $treatment : 'ninguno').'.',
-        ]);
     }
 }

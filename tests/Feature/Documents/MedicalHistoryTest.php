@@ -99,7 +99,7 @@ class MedicalHistoryTest extends TestCase
         }
     }
 
-    public function test_generates_pdf_and_json_and_updates_the_medical_record(): void
+    public function test_generates_pdf_and_json_without_touching_the_medical_record(): void
     {
         $response = $this->actingAsMember($this->doctor)->post('/documentos/historia-clinica', $this->payload());
 
@@ -139,14 +139,13 @@ class MedicalHistoryTest extends TestCase
             'respiration' => 16,
         ], $json['answers']);
 
-        // D3: el expediente refleja la historia clínica.
+        // El expediente no se toca: alergias y antecedentes se capturan a mano en el Expediente (sin resúmenes automáticos).
         $record = MedicalRecord::where('patient_id', $this->patient->id)->sole();
-        $this->assertSame('Penicilina', $record->allergies);
-        $this->assertStringContainsString('Padecimientos: Diabetes, Reacciones alérgicas.', $record->medical_history);
-        $this->assertStringContainsString('Tratamiento médico actual: Metformina 850 mg.', $record->medical_history);
+        $this->assertNull($record->allergies);
+        $this->assertNull($record->medical_history);
 
         $this->assertTrue(AuditLog::where('entity_id', $document->id)->where('action', 'insert')->exists());
-        $this->assertTrue(AuditLog::where('entity_id', $record->id)->where('action', 'update')->exists());
+        $this->assertFalse(AuditLog::where('entity_id', $record->id)->where('action', 'update')->exists());
         $this->assertStringNotContainsString('Penicilina', AuditLog::pluck('changed_fields')->toJson());
 
         $this->actingAsMember($this->doctor)->get(route('documents.show', $document))->assertOk()->assertSee('Generado');
