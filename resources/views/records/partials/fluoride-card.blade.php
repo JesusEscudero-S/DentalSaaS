@@ -29,12 +29,18 @@
                         @foreach ($fluorideByYear as $year => $applications)
                             <td class="border border-slate-200 px-2 py-1.5 align-top">
                                 @foreach ($applications as $application)
-                                    <div class="group flex items-center justify-between gap-1 rounded px-1 py-0.5 hover:bg-slate-50"
-                                        title="{{ $application->appliedBy->displayName() }}{{ $application->notes ? ' · '.$application->notes : '' }}">
-                                        <span class="text-slate-900">{{ Ui::date($application->applied_on) }}</span>
-                                        <button type="button" aria-label="Eliminar aplicación del {{ Ui::date($application->applied_on) }}"
-                                            x-on:click="$dispatch('open-modal', { name: 'delete-fluoride', label: @js(Ui::date($application->applied_on)), action: @js(route('records.fluoride.destroy', [$patient, $application])) })"
-                                            class="rounded px-1 text-slate-400 opacity-0 hover:text-danger-600 focus-visible:opacity-100 group-hover:opacity-100">×</button>
+                                    {{-- Cada aplicación: fecha, quién la aplicó y sus observaciones (visibles, no solo en un tooltip) --}}
+                                    <div class="group rounded px-1 py-1 hover:bg-slate-50 [&:not(:first-child)]:border-t [&:not(:first-child)]:border-slate-100">
+                                        <div class="flex items-center justify-between gap-1">
+                                            <span class="font-semibold text-slate-900">{{ Ui::date($application->applied_on) }}</span>
+                                            <button type="button" aria-label="Eliminar aplicación del {{ Ui::date($application->applied_on) }}"
+                                                x-on:click="$dispatch('open-modal', { name: 'delete-fluoride', label: @js(Ui::date($application->applied_on)), action: @js(route('records.fluoride.destroy', [$patient, $application])) })"
+                                                class="rounded px-1 text-slate-400 opacity-0 hover:text-danger-600 focus-visible:opacity-100 group-hover:opacity-100">×</button>
+                                        </div>
+                                        <p class="text-[11px] leading-4 text-slate-500">{{ $application->appliedBy->displayName() }}</p>
+                                        @if ($application->notes)
+                                            <p class="mt-0.5 break-words text-[12px] leading-4 text-slate-700">{{ $application->notes }}</p>
+                                        @endif
                                     </div>
                                 @endforeach
                                 <p class="mt-1 px-1 text-[11px] text-slate-400">{{ $applications->count() }} {{ $applications->count() === 1 ? 'aplicación' : 'aplicaciones' }}</p>

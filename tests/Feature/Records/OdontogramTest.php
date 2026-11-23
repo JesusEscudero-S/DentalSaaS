@@ -76,7 +76,9 @@ class OdontogramTest extends RecordTestCase
         $this->assertSame(2, FluorideApplication::withoutGlobalScopes()->count());
         $this->actingAsMember($this->staff)->get($this->url('odontograma'))
             ->assertSee('Control de aplicaciones de flúor')
-            ->assertSeeInOrder([(string) today()->year, (string) $lastYear->year]);
+            ->assertSeeInOrder([(string) today()->year, (string) $lastYear->year])
+            // Las observaciones y quién la aplicó se ven en la tarjeta (no solo en un tooltip).
+            ->assertSeeInOrder([$this->doctor->displayName(), 'Barniz'], false);
     }
 
     public function test_fluoride_date_cannot_be_in_the_future(): void
