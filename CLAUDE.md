@@ -159,8 +159,13 @@ tests/Feature/<Modulo>/
   no de rol). Al firmar se guarda `content_hash` (SHA-256) y `verifyIntegrity()` lo comprueba.
 - **Odontograma**: un hallazgo nunca se sobrescribe; el vigente se cierra con `superseded_at` y se crea
   otro (la BD permite uno vigente por pieza). Las piezas válidas salen de `App\Enums\Dentition`.
-- **Archivos clínicos** en el disco privado `local` (`storage/app/clinical/<clínica>/<paciente>/<uuid>.<ext>`),
-  se descargan por el controlador (nunca `public/`). Eliminar = `deleted_at`.
+- **Archivos clínicos** (`clinical_files`, enum `ClinicalFileType`: `XRay`, `Consent`, `IntraoralPhoto`, `Other`)
+  en el disco privado `local`, se descargan por el controlador (nunca `public/`). Eliminar = `deleted_at`.
+  Los suben dos módulos: el Expediente (`clinical/<clínica>/<paciente>/<uuid>.<ext>`) y Documentos
+  (`org/<clínica>/documentos/<plantilla>/<documento>/documento.pdf`). La pestaña Archivos muestra ambos, pero
+  los de Documentos (`ClinicalFile::isTemplateDocument()`) solo se eliminan desde Documentos.
+- **Documentos no modifica el expediente**: la Historia clínica precarga las alergias de `medical_records`, pero
+  no las sobrescribe ni genera resúmenes automáticos. Alergias y antecedentes se capturan a mano (RF 6.2).
 - Rutas anidadas bajo `{patient}` usan `scopeBindings()` (el hijo debe ser de ese paciente → 404).
   Si el hijo no es relación directa del paciente (notas), se comprueba en el controlador.
 - Pruebas con archivos: `Storage::fake()` y PNG real en base64 (`UploadedFile::fake()->image()` necesita
