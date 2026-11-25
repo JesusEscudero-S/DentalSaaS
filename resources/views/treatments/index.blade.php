@@ -1,4 +1,4 @@
-{{-- Módulo 7: pestaña "Tratamientos" del expediente. Lista de planes del paciente. --}}
+{{-- Módulo 7: pestaña "Tratamientos" del expediente. Lista de planes (presupuestos) del paciente. --}}
 @php use App\Support\Ui; @endphp
 
 <x-records.shell :patient="$patient" :record="$record" :doctors="$doctors" active="tratamientos" section="Tratamientos">
@@ -20,25 +20,28 @@
             <colgroup><col class="w-[14%]"><col class="w-[30%]"><col class="w-[18%]"><col class="w-[12%]"><col class="w-[12%]"><col class="w-[14%]"></colgroup>
             <thead>
                 <tr class="border-y border-slate-200 bg-slate-50 text-left">
-                    @foreach (['Folio', 'Diagnóstico', 'Odontólogo', 'Fecha', 'Costo estimado', 'Estatus'] as $heading)
+                    @foreach (['Folio', 'Procedimientos', 'Odontólogo', 'Fecha', 'Costo estimado', 'Estatus'] as $heading)
                         <th scope="col" class="px-4 py-[11px] text-[12px] font-semibold uppercase text-slate-400">{{ $heading }}</th>
                     @endforeach
                 </tr>
             </thead>
             <tbody>
                 @forelse ($plans as $plan)
-                    @php $url = route('records.treatments.show', [$patient, $plan]); @endphp
+                    @php
+                        $url = route('records.treatments.show', [$patient, $plan->quote]);
+                        $summary = $plan->procedures->map(fn ($pt) => $pt->treatment?->name)->filter()->unique()->join(', ');
+                    @endphp
                     <tr class="h-[53px] cursor-pointer border-b border-slate-200 bg-white transition-colors hover:bg-slate-50"
                         x-data x-on:click="window.location = @js($url)">
                         <td class="px-4 py-3">
                             <a href="{{ $url }}" class="font-mono text-body-md font-semibold text-primary-600 hover:underline">{{ $plan->quote->folio }}</a>
-                            @if ($plan->version > 1)
-                                <span class="block text-[11px] text-slate-400">Versión {{ $plan->version }}</span>
+                            @if ($plan->replaced_by)
+                                <span class="block text-[11px] text-slate-400">Reemplazado por {{ $plan->replaced_by }}</span>
                             @endif
                         </td>
-                        <td class="truncate px-4 py-3 text-body text-slate-900" title="{{ $plan->diagnosis }}">{{ $plan->diagnosis }}</td>
-                        <td class="truncate px-4 py-3 text-body text-slate-700">{{ $plan->doctor?->displayName() }}</td>
-                        <td class="px-4 py-3 text-[12.5px] text-slate-700">{{ Ui::date($plan->diagnosed_on) }}</td>
+                        <td class="truncate px-4 py-3 text-body text-slate-900" title="{{ $summary }}">{{ $summary ?: '—' }}</td>
+                        <td class="truncate px-4 py-3 text-body text-slate-700">{{ $plan->doctor()?->displayName() }}</td>
+                        <td class="px-4 py-3 text-[12.5px] text-slate-700">{{ Ui::date($plan->diagnosedOn()) }}</td>
                         <td class="px-4 py-3 font-mono text-body text-slate-900">{{ Ui::money($plan->quote->total) }}</td>
                         <td class="px-4 py-3">
                             <x-ui.badge :color="$plan->status->color()">{{ $plan->status->label() }}</x-ui.badge>

@@ -59,7 +59,6 @@ class UserManagementTest extends TestCase
         return [
             'full_name' => 'laura gómez',
             'email' => 'Laura@Demo.test',
-            'phone' => '55 1234-5678',
             'role_id' => $this->secretaryRole->id,
             ...$overrides,
         ];
@@ -91,8 +90,6 @@ class UserManagementTest extends TestCase
 
         $user = User::where('email', 'laura@demo.test')->firstOrFail();
         $this->assertSame('LAURA GÓMEZ', $user->full_name);
-        $this->assertSame('5512345678', $user->phone);
-        $this->assertTrue($user->must_change_password);
         $this->assertTrue(Hash::check($temp, $user->password));
         $this->assertMatchesRegularExpression('/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d).{8,}$/', $temp);
 
@@ -118,8 +115,8 @@ class UserManagementTest extends TestCase
         $this->teamMember(null, ['email' => 'laura@demo.test']);
 
         $this->actingAsMember($this->admin)
-            ->post(route('users.store'), $this->payload(['phone' => '123', 'role_id' => 'no-existe']))
-            ->assertSessionHasErrorsIn('createUser', ['email', 'phone', 'role_id']);
+            ->post(route('users.store'), $this->payload(['role_id' => 'no-existe']))
+            ->assertSessionHasErrorsIn('createUser', ['email', 'role_id']);
     }
 
     public function test_no_acepta_rol_de_otra_clinica(): void
@@ -188,13 +185,11 @@ class UserManagementTest extends TestCase
 
     public function test_restablecer_contrasena(): void
     {
-        $member = $this->teamMember(null, ['locked_until' => now()->addMinutes(10), 'failed_login_attempts' => 3]);
+        $member = $this->teamMember();
 
         $this->actingAsMember($this->admin)->patch(route('users.reset-password', $member))->assertSessionHas('temp_password');
 
         $user = $member->user->fresh();
-        $this->assertTrue($user->must_change_password);
-        $this->assertNull($user->locked_until);
         $this->assertTrue(Hash::check(session('temp_password')['password'], $user->password));
     }
 

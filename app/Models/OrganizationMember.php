@@ -74,7 +74,6 @@ class OrganizationMember extends Model
             'id' => $this->id,
             'full_name' => $this->user->full_name,
             'email' => $this->user->email,
-            'phone' => $this->user->phone,
             'role_id' => $this->role_id,
             'professional_license' => $this->doctorProfile?->professional_license,
             'specialty' => $this->doctorProfile?->specialty,

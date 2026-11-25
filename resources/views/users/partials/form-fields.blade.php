@@ -13,12 +13,8 @@
 <x-ui.input name="full_name" label="Nombre completo" required :bag="$bag" placeholder="Escribe el nombre completo"
     autocomplete="off" maxlength="200" class="uppercase placeholder:normal-case" :x-model="$m('full_name')" />
 
-<div class="grid grid-cols-2 gap-4">
-    <x-ui.input name="email" type="email" label="Correo" required :bag="$bag" placeholder="correo@ejemplo.com" maxlength="254"
-        autocomplete="off" hint="Con este correo inicia sesión." :x-model="$m('email')" />
-    <x-ui.input name="phone" type="tel" label="Teléfono" required :bag="$bag" placeholder="55 0000 0000" inputmode="numeric"
-        maxlength="14" :x-model="$m('phone')" />
-</div>
+<x-ui.input name="email" type="email" label="Correo" required :bag="$bag" placeholder="correo@ejemplo.com" maxlength="254"
+    autocomplete="off" hint="Con este correo inicia sesión." :x-model="$m('email')" />
 
 <x-ui.select name="role_id" label="Rol" required :bag="$bag" :options="$roleOptions" placeholder="Selecciona un rol"
     :x-model="$roleModel" />

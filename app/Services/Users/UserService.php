@@ -24,7 +24,7 @@ class UserService
     /** Roles que atienden pacientes: necesitan perfil de doctor para aparecer en Agenda y Expediente. */
     public const DOCTOR_ROLES = ['odontologo', 'jefe_odontologia'];
 
-    private const USER_FIELDS = ['full_name', 'email', 'phone'];
+    private const USER_FIELDS = ['full_name', 'email'];
 
     public function __construct(
         private AuditLogger $audit,
@@ -32,7 +32,7 @@ class UserService
     ) {}
 
     /**
-     * Alta de usuario (diagrama 1): cuenta activa con contraseña temporal que debe cambiar (RN-U6).
+     * Alta de usuario (diagrama 1): cuenta activa con una contraseña temporal que el administrador le entrega.
      *
      * @param  array<string, mixed>  $data  validados por StoreUserRequest
      * @return array{0: OrganizationMember, 1: string} la membresía y la contraseña temporal en claro
@@ -45,7 +45,6 @@ class UserService
             $user = User::create([
                 ...Arr::only($data, self::USER_FIELDS),
                 'password' => $password,
-                'must_change_password' => true,
                 'is_active' => true,
             ]);
 
@@ -127,7 +126,7 @@ class UserService
     }
 
     /**
-     * Diagrama 3, rama "Restablecer contraseña": genera una temporal y marca que debe cambiarla.
+     * Diagrama 3, rama "Restablecer contraseña": genera una temporal nueva.
      * Al cambiar el hash, el middleware session.current cierra las sesiones abiertas del usuario.
      */
     public function resetPassword(OrganizationMember $member): string
@@ -139,12 +138,7 @@ class UserService
         $password = TemporaryPassword::generate();
 
         DB::transaction(function () use ($member, $password) {
-            $member->user->update([
-                'password' => $password,
-                'must_change_password' => true,
-                'failed_login_attempts' => 0,
-                'locked_until' => null,
-            ]);
+            $member->user->update(['password' => $password]);
 
             $this->audit->log($member, AuditLogger::UPDATE, ['password' => 'reset']);
         });

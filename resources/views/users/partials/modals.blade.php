@@ -6,7 +6,7 @@
 @php
     $editErrors = $errors->editUser->any();
     $editInitial = $editErrors
-        ? collect(['id', 'full_name', 'email', 'phone', 'role_id', 'professional_license', 'specialty'])
+        ? collect(['id', 'full_name', 'email', 'role_id', 'professional_license', 'specialty'])
             ->mapWithKeys(fn ($f) => [$f => old($f === 'id' ? '_id' : $f, '')])->all()
         : [];
     $editAction = $editErrors && old('_id') ? route('users.update', old('_id')) : '';
@@ -66,7 +66,7 @@
     <p class="text-body text-slate-600">
         Se generará una contraseña temporal para
         <span class="font-semibold text-slate-900" x-text="payload.user?.label"></span>.
-        Se cerrarán sus sesiones abiertas y tendrá que cambiarla al entrar.
+        Se cerrarán sus sesiones abiertas.
     </p>
     <form method="POST" :action="payload.user?.urls.reset">
         @csrf
@@ -80,7 +80,7 @@
         <div class="flex flex-col gap-4" x-data="{ copied: false }">
             <p class="text-body text-slate-600">
                 Entrega esta contraseña temporal a <span class="font-semibold text-slate-900">{{ $temp['name'] }}</span>.
-                Tendrá que cambiarla la primera vez que entre. <span class="font-semibold">No se volverá a mostrar.</span>
+                Puede cambiarla en “Cambiar contraseña”, abajo a la izquierda. <span class="font-semibold">No se volverá a mostrar.</span>
             </p>
             <div class="flex flex-col gap-1 rounded-lg border border-slate-200 bg-slate-50 p-4">
                 <span class="text-overline uppercase text-slate-400">Usuario</span>

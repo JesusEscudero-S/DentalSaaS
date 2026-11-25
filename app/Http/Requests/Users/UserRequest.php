@@ -26,7 +26,6 @@ abstract class UserRequest extends FormRequest
         $this->merge([
             'full_name' => $upper($this->input('full_name')),
             'email' => $this->filled('email') ? mb_strtolower(trim($this->input('email'))) : null,
-            'phone' => preg_replace('/\D/', '', (string) $this->input('phone')) ?: null,
             'professional_license' => $this->filled('professional_license') ? trim($this->input('professional_license')) : null,
             'specialty' => $this->filled('specialty') ? trim($this->input('specialty')) : null,
         ]);
@@ -41,7 +40,6 @@ abstract class UserRequest extends FormRequest
             'full_name' => ['required', 'string', 'max:200'],
             // RN-U2: el correo es único (users.email es único en toda la BD).
             'email' => ['required', 'email:rfc', 'max:254', Rule::unique('users', 'email')->ignore($this->ignoredMember()?->user_id)],
-            'phone' => ['required', 'digits:10'],
             // RN-U3: cada usuario tiene un rol existente y activo de la clínica.
             'role_id' => [
                 'required', 'uuid',
@@ -57,7 +55,6 @@ abstract class UserRequest extends FormRequest
     {
         return [
             'email.unique' => 'Ya existe un usuario con ese correo.',
-            'phone.digits' => 'El teléfono debe tener exactamente 10 dígitos numéricos.',
             'role_id.exists' => 'El rol seleccionado no existe.',
             'role_id.required' => 'Selecciona un rol.',
         ];
@@ -69,7 +66,6 @@ abstract class UserRequest extends FormRequest
         return [
             'full_name' => 'nombre completo',
             'email' => 'correo',
-            'phone' => 'teléfono',
             'role_id' => 'rol',
             'professional_license' => 'cédula profesional',
             'specialty' => 'especialidad',
