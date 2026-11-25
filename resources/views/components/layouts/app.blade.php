@@ -109,9 +109,11 @@
                 @foreach ($breadcrumbs ?? [] as $label => $url)
                     <x-ui.icon name="expand-right" :size="24" class="shrink-0" />
                     @if ($url && ! $loop->last)
-                        <a href="{{ $url }}" @class(['truncate text-body text-slate-500 hover:text-slate-900', 'shrink-0' => $loop->first, 'min-w-[4rem]' => ! $loop->first])>{{ $label }}</a>
+                        {{-- Los niveles intermedios (ej. el nombre del paciente) se encogen primero (shrink-[8]) --}}
+                        <a href="{{ $url }}" @class(['truncate text-body text-slate-500 hover:text-slate-900', 'shrink-0' => $loop->first, 'min-w-[4rem] shrink-[8]' => ! $loop->first])>{{ $label }}</a>
                     @else
-                        <span class="shrink-0 text-body-md font-bold text-slate-900">{{ $label }}</span>
+                        {{-- El último nivel solo se recorta si ya no cabe nada más; nunca se encima en el buscador --}}
+                        <span class="min-w-[3rem] truncate text-body-md font-bold text-slate-900">{{ $label }}</span>
                     @endif
                 @endforeach
             </nav>
