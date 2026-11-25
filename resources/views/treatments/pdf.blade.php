@@ -1,5 +1,11 @@
 {{-- Módulo 7, RN-T7: plan, autorización y resumen del tratamiento (DomPDF: CSS 2.1). --}}
-@php use App\Support\Ui; @endphp
+@php
+    use App\Services\Treatments\TreatmentPlan;
+    use App\Support\Ui;
+
+    $procedures = $plan->procedures;
+    $realCost = $plan->realCost();
+@endphp
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -29,15 +35,15 @@
     <table class="header">
         <tr>
             <td><div class="clinic">{{ $organization?->commercial_name }}</div><div class="muted">Generado el {{ now()->format('d/m/Y H:i') }}</div></td>
-            <td class="title">Plan de tratamiento<br><span class="muted">{{ $plan->quote->folio }} · {{ $plan->status->label() }}@if ($plan->version > 1) · versión {{ $plan->version }}@endif</span></td>
+            <td class="title">Plan de tratamiento<br><span class="muted">{{ $plan->quote->folio }} · {{ $plan->status->label() }}</span></td>
         </tr>
     </table>
 
     <table>
         <tr>
             <td><span class="muted">Paciente</span><br><b>{{ $patient->full_name }}</b> ({{ $patient->folio }})</td>
-            <td><span class="muted">Odontólogo responsable</span><br>{{ $plan->doctor?->displayName() }}</td>
-            <td><span class="muted">Fecha del diagnóstico</span><br>{{ Ui::date($plan->diagnosed_on) }}</td>
+            <td><span class="muted">Odontólogo responsable</span><br>{{ $plan->doctor()?->displayName() }}</td>
+            <td><span class="muted">Fecha del diagnóstico</span><br>{{ Ui::date($plan->diagnosedOn()) }}</td>
         </tr>
     </table>
 
@@ -72,16 +78,16 @@
             <table class="grid">
                 <thead><tr><th style="width: 14%">Fecha</th><th>Actividades realizadas</th><th style="width: 22%">Responsable</th></tr></thead>
                 <tbody>
-                    @foreach ($plan->sessions->sortBy('performed_on') as $session)
+                    @foreach ($plan->sessions->sortBy(fn ($n) => $n->encounter?->occurred_at) as $session)
                         <tr>
-                            <td>{{ Ui::date($session->performed_on) }}</td>
+                            <td>{{ Ui::date($session->encounter?->occurred_at) }}</td>
                             <td>
-                                {!! nl2br(e($session->activities)) !!}
-                                @foreach ($session->notes as $note)
-                                    <br><i>Corrección ({{ $note->created_at->format('d/m/Y') }}): {{ $note->note }}</i>
+                                {!! nl2br(e(TreatmentPlan::body($session))) !!}
+                                @foreach ($session->addenda as $addendum)
+                                    <br><i>Adenda: {{ $addendum->content }}</i>
                                 @endforeach
                             </td>
-                            <td>{{ $session->doctor?->displayName() }}</td>
+                            <td>{{ $session->responsibleDoctor?->displayName() }}</td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -98,7 +104,7 @@
             <table class="signatures">
                 <tr>
                     <td><div class="line">{{ $patient->full_name }}<br><span class="muted">Paciente o tutor</span></div></td>
-                    <td><div class="line">{{ $plan->doctor?->displayName() }}<br><span class="muted">Odontólogo responsable</span></div></td>
+                    <td><div class="line">{{ $plan->doctor()?->displayName() }}<br><span class="muted">Odontólogo responsable</span></div></td>
                 </tr>
             </table>
         @endif

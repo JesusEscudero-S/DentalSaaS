@@ -2,6 +2,8 @@
 
 namespace App\Enums;
 
+use App\Models\PatientTreatment;
+
 /** Módulo 7: estatus del plan de tratamiento y sus cambios válidos. */
 enum TreatmentPlanStatus: string
 {
@@ -59,6 +61,27 @@ enum TreatmentPlanStatus: string
             self::Authorized => in_array($to, [self::Proposed, self::InProgress, self::Completed, self::Cancelled], true),
             self::InProgress => in_array($to, [self::Completed, self::Cancelled], true),
             self::Completed, self::Cancelled => false,
+        };
+    }
+
+    /**
+     * El estatus no se guarda: sale del presupuesto y de sus procedimientos (patient_treatments).
+     * enviado/borrador → Propuesto · rechazado → Cancelado · aprobado → Autorizado, En proceso o Concluido.
+     *
+     * @param  iterable<int, PatientTreatment>  $procedures
+     */
+    public static function fromQuote(string $quoteStatus, iterable $procedures): self
+    {
+        $statuses = collect($procedures)->pluck('status')->reject(fn ($s) => $s === 'cancelado');
+
+        return match ($quoteStatus) {
+            'rechazado' => self::Cancelled,
+            'aprobado' => match (true) {
+                $statuses->isNotEmpty() && $statuses->every(fn ($s) => $s === 'realizado') => self::Completed,
+                $statuses->contains('realizado') => self::InProgress,
+                default => self::Authorized,
+            },
+            default => self::Proposed,
         };
     }
 }

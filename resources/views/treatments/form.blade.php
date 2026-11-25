@@ -18,7 +18,7 @@
 
 <x-records.shell :patient="$patient" :record="$record" :doctors="$doctors" active="tratamientos" :section="$editing ? 'Modificar tratamiento' : 'Nuevo tratamiento'">
     <form method="POST" novalidate
-        action="{{ $editing ? route('records.treatments.update', [$patient, $plan]) : route('records.treatments.store', $patient) }}"
+        action="{{ $editing ? route('records.treatments.update', [$patient, $plan->quote]) : route('records.treatments.store', $patient) }}"
         x-data="{
             rows: @js(array_values($rows)),
             prices: @js($prices),
@@ -45,7 +45,7 @@
 
         @if ($editing && $plan->status->value === 'autorizado')
             <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-body-md text-amber-800" role="alert">
-                Este tratamiento ya está autorizado. Si cambias procedimientos o costos se crea la versión {{ $plan->version + 1 }},
+                Este tratamiento ya está autorizado. Si cambias procedimientos o costos se crea un presupuesto nuevo que reemplaza a {{ $plan->quote->folio }},
                 el paciente tendrá que autorizarlo otra vez y se avisará al jefe de odontología.
             </div>
         @endif
@@ -139,7 +139,7 @@
         @endif
 
         <div class="flex items-center justify-end gap-3">
-            <x-ui.button variant="secondary" :href="$editing ? route('records.treatments.show', [$patient, $plan]) : route('records.treatments.index', $patient)">Cancelar</x-ui.button>
+            <x-ui.button variant="secondary" :href="$editing ? route('records.treatments.show', [$patient, $plan->quote]) : route('records.treatments.index', $patient)">Cancelar</x-ui.button>
             <x-ui.button type="submit">{{ $editing ? 'Guardar cambios' : 'Guardar como propuesto' }}</x-ui.button>
         </div>
     </form>
