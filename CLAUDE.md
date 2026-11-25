@@ -65,7 +65,19 @@ archivos, preguntas) y **no escribir código hasta que se apruebe**.
   Hay **triggers** en la BD (documentos firmados inmutables, inventario inmutable, último administrador,
   aplicaciones de pago); si un INSERT/UPDATE falla con `SQLSTATE[45000]`, es una regla del trigger.
   Migraciones agregadas por los módulos (acordadas con el equipo): `2026_11_20_000001_create_fluoride_applications_table`
-  (módulo 6, RF 6.6).
+  (módulo 6, RF 6.6) y `2026_11_25_000001_add_account_security_columns_to_users` (módulo 1: teléfono,
+  contraseña temporal y bloqueo por intentos; **pendiente de acordar con el equipo**).
+
+## Usuarios y sesión (módulo 1)
+
+- Un "usuario" de la clínica es su `OrganizationMember` (rol y estatus); nombre, correo, teléfono y
+  contraseña viven en `users`. Las rutas usan `{member}`.
+- Alta y "Restablecer contraseña" generan una contraseña temporal (`TemporaryPassword`) que se muestra
+  una sola vez; `must_change_password` obliga a cambiarla (middleware `password.changed`, ruta `password.change`).
+- `session.current` (`EnsureSessionIsCurrent`) cierra la sesión si cambió la contraseña de ese usuario.
+  Si un controlador cambia la contraseña del propio usuario, debe llamar `EnsureSessionIsCurrent::remember()`.
+- Login: 5 intentos fallidos bloquean la cuenta 15 min (`users.locked_until`); inicio de sesión y bloqueo
+  quedan en `audit_log` (`login`, `lock`).
 - **Nombres en mayúsculas**: nombres de personas, razón social y RFC se guardan en mayúsculas.
 - **Teléfonos**: se guardan solo los 10 dígitos y se muestran con `Ui::phone()` ("55 1847 2093").
 
