@@ -69,6 +69,21 @@ archivos, preguntas) y **no escribir código hasta que se apruebe**.
 - **Nombres en mayúsculas**: nombres de personas, razón social y RFC se guardan en mayúsculas.
 - **Teléfonos**: se guardan solo los 10 dígitos y se muestran con `Ui::phone()` ("55 1847 2093").
 
+## Inventario (módulo 10)
+
+- Rutas `/inventario` (`inventory.*`): pestañas Insumos y Movimientos con encabezado común `<x-inventory.shell>`.
+  Usa las tablas existentes (`inventory_items`, `inventory_stock`, `inventory_movements`, `inventory_lots`,
+  `suppliers`); **sin migraciones nuevas**. La clínica trabaja con una sola sucursal (la principal).
+- **El stock nunca se escribe a mano**: cada entrada/salida es una fila en `inventory_movements` y el trigger
+  `inventory_movements_ai` actualiza `quantity_on_hand` y el costo promedio. Los movimientos son inmutables;
+  un error se corrige con otro movimiento. `InventoryService` bloquea la fila de stock (`lockForUpdate()`) y
+  rechaza salidas mayores al stock con `"Stock insuficiente"` (RN-I6).
+- Alerta de escasez (RN-I8) = dato derivado `quantity_on_hand <= min_quantity` (`InventoryItem::isLowStock()`),
+  no se guarda. Un material inactivo no admite movimientos ni alerta (RN-I10).
+- Categoría (`InventoryCategory`) y unidad (`UnitOfMeasure`) son enums de PHP; en la BD se guardan como texto.
+  El nombre y el SKU son únicos por clínica (RN-I2). El proveedor se escribe libre y se busca o crea en `suppliers`.
+- Lotes opcionales: las entradas suman al lote; las salidas descuentan primero de los lotes que caducan antes.
+
 ## Auditoría
 
 - Toda alta, modificación, desactivación/reactivación, firma o cancelación se registra en `audit_log`

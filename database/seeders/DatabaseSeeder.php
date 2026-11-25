@@ -12,6 +12,7 @@ class DatabaseSeeder extends Seeder
             DemoOrganizationSeeder::class,
             TreatmentCatalogSeeder::class,   // catálogo de demo hasta que exista el módulo 5
             FinanceSeeder::class,
+            InventorySeeder::class,
             PatientSeeder::class,
             AppointmentSeeder::class,
             RecordSeeder::class,

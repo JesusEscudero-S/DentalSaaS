@@ -26,5 +26,6 @@ Route::middleware(['auth', 'organization', 'session.current'])->group(function (
     // require __DIR__.'/modules/servicios.php';
     // ...
     require __DIR__.'/modules/finanzas.php';
+    require __DIR__.'/modules/inventario.php';
     require __DIR__.'/modules/documentos.php';
 });
