@@ -23,7 +23,7 @@
             ['key' => 'presupuestos', 'label' => 'Presupuestos', 'icon' => 'nav-presupuestos', 'href' => null],
             ['key' => 'facturacion', 'label' => 'Facturación', 'icon' => 'nav-facturacion', 'href' => null],
             ['key' => 'finanzas', 'label' => 'Finanzas', 'icon' => null, 'href' => Route::has('finances.index') ? route('finances.index') : null],
-            ['key' => 'inventario', 'label' => 'Inventario', 'icon' => 'nav-inventario', 'href' => null],
+            ['key' => 'inventario', 'label' => 'Inventario', 'icon' => 'nav-inventario', 'href' => Route::has('inventory.index') ? route('inventory.index') : null],
             ['key' => 'documentos', 'label' => 'Documentos', 'icon' => null, 'href' => Route::has('documents.index') ? route('documents.index') : null],
         ];
     @endphp
