@@ -10,6 +10,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             DemoOrganizationSeeder::class,
+            TreatmentCatalogSeeder::class,   // catálogo de demo hasta que exista el módulo 5
             FinanceSeeder::class,
             PatientSeeder::class,
             AppointmentSeeder::class,

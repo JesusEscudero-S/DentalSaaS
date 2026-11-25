@@ -14,6 +14,7 @@
         'notas' => ['Notas', route('records.notes.index', $patient)],
         'archivos' => ['Archivos', route('records.files.index', $patient)],
         'odontograma' => ['Odontograma', route('records.odontogram.index', $patient)],
+        'tratamientos' => ['Tratamientos', route('records.treatments.index', $patient)], // módulo 7
     ];
 
     $breadcrumbs = $section

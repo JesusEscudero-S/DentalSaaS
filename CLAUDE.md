@@ -68,6 +68,21 @@ archivos, preguntas) y **no escribir código hasta que se apruebe**.
   (módulo 6, RF 6.6) y `2026_11_25_000001_add_account_security_columns_to_users` (módulo 1: teléfono,
   contraseña temporal y bloqueo por intentos; **pendiente de acordar con el equipo**).
 
+## Tratamientos (módulo 7)
+
+- Pestaña "Tratamientos" del expediente (`/pacientes/{patient}/tratamientos`, rutas `records.treatments.*`).
+- **Plan = presupuesto**: cada `treatment_plans` apunta a su `quote` vigente; los procedimientos son sus
+  `quote_items` + `patient_treatments` (uno por pieza). Así Documentos puede imprimir la autorización.
+  Presupuesto: Propuesto → `enviado`, Autorizado → `aprobado`, Cancelado o versión anterior → `rechazado`
+  (cada cambio deja fila en `quote_status_history`).
+- Estatus en `App\Enums\TreatmentPlanStatus` (máquina de estados). Concluido y Cancelado son solo lectura.
+- Cambiar procedimientos o costos crea una **versión** nueva (otro presupuesto y `treatment_plan_versions`);
+  si estaba Autorizado vuelve a Propuesto con `requires_reauthorization` (RN-T5) y alerta al jefe en `notifications`.
+- Sesión = `treatment_sessions` + una `clinical_encounters` (consulta del expediente). No se borran: se
+  corrigen con `treatment_session_notes` (RN-T4). Al realizar todos los procedimientos el plan se concluye.
+- Migración `2026_11_25_000002_create_treatment_plans_tables` (**pendiente de acordar con el equipo**).
+  `TreatmentCatalogSeeder` siembra un catálogo de demo mientras no exista el módulo 5.
+
 ## Usuarios y sesión (módulo 1)
 
 - Un "usuario" de la clínica es su `OrganizationMember` (rol y estatus); nombre, correo, teléfono y
