@@ -8,11 +8,11 @@
     $currentId = app(\App\Support\CurrentOrganization::class)->member()?->id;
 @endphp
 
-<x-layouts.app title="Usuarios" active="usuarios" :breadcrumbs="['Usuarios' => null]">
+<x-settings.shell active="usuarios" section="Usuarios y roles">
     {{-- Encabezado --}}
     <div class="flex items-start justify-between gap-6 pb-5">
         <div class="py-[3px]">
-            <h1 class="text-h1 text-slate-900">Gestión de usuarios</h1>
+            <h2 class="text-[18px] font-semibold text-slate-900">Usuarios y roles</h2>
             <p class="pt-[3px] text-body font-semibold text-slate-400">
                 {{ $activeCount }} {{ $activeCount === 1 ? 'usuario activo' : 'usuarios activos' }}
             </p>
@@ -147,4 +147,4 @@
     @push('modals')
         @include('users.partials.modals')
     @endpush
-</x-layouts.app>
+</x-settings.shell>

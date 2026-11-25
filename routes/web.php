@@ -18,6 +18,7 @@ Route::middleware(['auth', 'organization', 'session.current'])->group(function (
     Route::get('/cambiar-contrasena', [PasswordChangeController::class, 'edit'])->name('password.change');
     Route::put('/cambiar-contrasena', [PasswordChangeController::class, 'update'])->name('password.change.update');
 
+    require __DIR__.'/modules/configuracion.php';
     require __DIR__.'/modules/usuarios.php';
     require __DIR__.'/modules/pacientes.php';
     require __DIR__.'/modules/agenda.php';

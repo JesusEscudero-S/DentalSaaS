@@ -67,20 +67,13 @@
 
             <div class="my-1 h-px bg-slate-200"></div>
             <p class="pb-1 text-overline uppercase text-slate-400">Administración</p>
-            {{-- Módulo 1. Gestión de usuarios --}}
-            <a href="{{ route('users.index') }}" @if ($active === 'usuarios') aria-current="page" @endif
+            {{-- Configuración (Figma): adentro están Usuarios y roles (módulo 1), Tratamientos, Mi perfil… --}}
+            <a href="{{ route('settings.index') }}" @if ($active === 'configuracion') aria-current="page" @endif
                 @class([
                     'flex items-center gap-3 rounded-lg px-3 py-2 text-body-md font-bold transition-colors',
-                    'bg-primary-50 text-primary-600' => $active === 'usuarios',
-                    'text-slate-600 hover:bg-slate-100 hover:text-slate-900' => $active !== 'usuarios',
+                    'bg-primary-50 text-primary-600' => $active === 'configuracion',
+                    'text-slate-600 hover:bg-slate-100 hover:text-slate-900' => $active !== 'configuracion',
                 ])>
-                <svg class="size-[18px] shrink-0" viewBox="0 0 24 24" fill="none" stroke="#33363F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
-                </svg>
-                Usuarios
-            </a>
-            <a href="#" aria-disabled="true" title="Disponible próximamente"
-                class="flex cursor-not-allowed items-center gap-3 rounded-lg px-3 py-2 text-body-md font-bold text-slate-600">
                 <x-ui.icon name="nav-configuracion" :size="18" />
                 Configuración
             </a>
