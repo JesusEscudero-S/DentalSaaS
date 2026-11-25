@@ -1,8 +1,8 @@
 {{-- Módulo 1, P7 "Mi perfil": cada usuario cambia su propia contraseña. --}}
-<x-layouts.app title="Cambiar contraseña" :breadcrumbs="['Cambiar contraseña' => null]">
-    <div class="mx-auto flex max-w-[480px] flex-col gap-5 pt-6">
+<x-settings.shell active="perfil" section="Mi perfil" title="Cambiar contraseña">
+    <div class="flex max-w-[480px] flex-col gap-5">
         <div>
-            <h1 class="text-h1 text-slate-900">Cambiar contraseña</h1>
+            <h2 class="text-[18px] font-semibold text-slate-900">Cambiar contraseña</h2>
         </div>
 
         <form method="POST" action="{{ route('password.change.update') }}" class="flex flex-col gap-4 rounded-[10px] border border-slate-200 bg-white p-6" novalidate>
@@ -17,4 +17,4 @@
             </div>
         </form>
     </div>
-</x-layouts.app>
+</x-settings.shell>
