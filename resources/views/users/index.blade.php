@@ -35,7 +35,7 @@
             <label class="flex h-9 w-[349px] items-center gap-1 rounded-lg border border-slate-200 bg-slate-50 px-3.5 focus-within:border-primary-600 focus-within:ring-2 focus-within:ring-primary-600/15">
                 <x-ui.icon name="search" :size="24" />
                 <span class="sr-only">Buscar</span>
-                <input type="search" name="q" value="{{ $filters['q'] }}" placeholder="Buscar por nombre, correo o teléfono..."
+                <input type="search" name="q" value="{{ $filters['q'] }}" placeholder="Buscar por nombre o correo..."
                     class="h-full w-full border-0 bg-transparent px-2 text-body-md text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-0">
             </label>
             <x-ui.select name="rol" compact :options="$roleOptions" placeholder="Todos los roles" :value="$filters['rol']"
@@ -50,11 +50,11 @@
         {{-- Tabla --}}
         <table class="w-full table-fixed border-collapse">
             <colgroup>
-                <col class="w-[30%]"><col class="w-[13%]"><col class="w-[17%]"><col class="w-[15%]"><col class="w-[10%]"><col class="w-[15%]">
+                <col class="w-[36%]"><col class="w-[20%]"><col class="w-[17%]"><col class="w-[11%]"><col class="w-[16%]">
             </colgroup>
             <thead>
                 <tr class="border-y border-slate-200 bg-slate-50 text-left">
-                    @foreach (['Usuario', 'Teléfono', 'Rol', 'Último acceso', 'Estado', 'Acciones'] as $heading)
+                    @foreach (['Usuario', 'Rol', 'Último acceso', 'Estado', 'Acciones'] as $heading)
                         <th scope="col" class="px-4 py-[11px] text-[12px] font-semibold uppercase text-slate-400">{{ $heading }}</th>
                     @endforeach
                 </tr>
@@ -77,7 +77,6 @@
                                 </div>
                             </div>
                         </td>
-                        <td class="px-4 py-3 font-mono text-body text-black">{{ Ui::phone($member->user->phone) ?: '—' }}</td>
                         <td class="px-4 py-3">
                             @if ($member->role)
                                 <x-ui.badge :color="$roleColors[$member->role->code] ?? 'slate'">{{ $member->role->name }}</x-ui.badge>
@@ -87,9 +86,6 @@
                         </td>
                         <td class="px-4 py-3 text-[12.5px] text-black">
                             {{ $member->user->last_login_at ? $member->user->last_login_at->format('d/m/Y H:i') : 'Nunca' }}
-                            @if ($member->user->isLocked())
-                                <span class="block text-[11px] font-semibold text-danger-500">Bloqueado</span>
-                            @endif
                         </td>
                         <td class="px-4 py-3"><x-ui.status-badge :status="$member->is_active ? 'active' : 'inactive'" /></td>
                         <td class="px-4 py-2">
@@ -126,7 +122,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="px-4 py-16 text-center">
+                        <td colspan="5" class="px-4 py-16 text-center">
                             <p class="text-body font-semibold text-slate-900">
                                 {{ $filters['q'] !== '' ? 'No se encontró ningún usuario' : 'No hay usuarios para mostrar' }}
                             </p>

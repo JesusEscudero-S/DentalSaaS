@@ -43,15 +43,7 @@ class LoginRequest extends FormRequest
      */
     public function authenticate(): void
     {
-        $user = User::where('email', Str::lower($this->string('email')))->first();
-
-        // Módulo 1, P1: cuenta bloqueada por intentos fallidos.
-        if ($user?->isLocked()) {
-            throw ValidationException::withMessages([
-                'email' => trans('auth.locked', ['minutes' => (int) ceil(now()->diffInSeconds($user->locked_until) / 60)]),
-            ]);
-        }
-
+        // P1 (bloqueo tras intentos fallidos) lo cubre el RateLimiter de Breeze: 5 intentos por correo e IP.
         $this->ensureIsNotRateLimited();
 
         // Solo usuarios activos (users.is_active) pueden iniciar sesión.
@@ -59,7 +51,6 @@ class LoginRequest extends FormRequest
 
         if (! Auth::attempt($credentials, $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
-            $this->registerFailedAttempt($user);
 
             throw ValidationException::withMessages([
                 'email' => trans('auth.failed'),
@@ -68,29 +59,10 @@ class LoginRequest extends FormRequest
 
         RateLimiter::clear($this->throttleKey());
 
-        // Diagrama 4, paso 8: último acceso y registro del inicio de sesión en bitácora.
+        // Módulo 1, diagrama 4 paso 8: último acceso (users.last_login_at) e inicio de sesión en bitácora.
         $user = Auth::user();
-        $user->forceFill(['failed_login_attempts' => 0, 'locked_until' => null, 'last_login_at' => now()])->save();
+        $user->forceFill(['last_login_at' => now()])->save();
         $this->audit($user, 'login');
-    }
-
-    /** P1: suma el intento; al llegar al máximo bloquea la cuenta y lo registra en bitácora. */
-    private function registerFailedAttempt(?User $user): void
-    {
-        if (! $user) {
-            return;
-        }
-
-        $attempts = $user->failed_login_attempts + 1;
-
-        if ($attempts >= User::MAX_FAILED_ATTEMPTS) {
-            $user->forceFill(['failed_login_attempts' => 0, 'locked_until' => now()->addMinutes(User::LOCK_MINUTES)])->save();
-            $this->audit($user, 'lock');
-
-            return;
-        }
-
-        $user->forceFill(['failed_login_attempts' => $attempts])->save();
     }
 
     /** La bitácora es por clínica: se registra en cada membresía del usuario. */

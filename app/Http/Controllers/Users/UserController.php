@@ -129,8 +129,7 @@ class UserController extends Controller
             ->select('organization_members.*')
             ->when($filters['q'] !== '', fn ($q) => $q->where(fn ($w) => $w
                 ->where('users.full_name', 'like', $like)
-                ->orWhere('users.email', 'like', $like)
-                ->orWhere('users.phone', 'like', $like)))
+                ->orWhere('users.email', 'like', $like)))
             ->when($filters['rol'] !== '', fn ($q) => $q->where('organization_members.role_id', $filters['rol']))
             ->when($filters['estado'] === 'activos', fn ($q) => $q->where('organization_members.is_active', true))
             ->when($filters['estado'] === 'inactivos', fn ($q) => $q->where('organization_members.is_active', false))

@@ -36,20 +36,19 @@
 
     <table class="grid">
         <thead>
-            <tr><th>Nombre</th><th>Correo</th><th>Teléfono</th><th>Rol</th><th>Último acceso</th><th>Estado</th></tr>
+            <tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Último acceso</th><th>Estado</th></tr>
         </thead>
         <tbody>
             @forelse ($members as $member)
                 <tr @class(['inactive' => ! $member->is_active])>
                     <td>{{ $member->user->full_name }}</td>
                     <td>{{ $member->user->email }}</td>
-                    <td>{{ Ui::phone($member->user->phone) ?: '—' }}</td>
                     <td>{{ $member->role?->name ?? 'Sin rol' }}</td>
                     <td>{{ $member->user->last_login_at?->format('d/m/Y H:i') ?? 'Nunca' }}</td>
                     <td>{{ $member->is_active ? 'Activo' : 'Inactivo' }}</td>
                 </tr>
             @empty
-                <tr><td colspan="6">No hay usuarios con estos filtros.</td></tr>
+                <tr><td colspan="5">No hay usuarios con estos filtros.</td></tr>
             @endforelse
         </tbody>
     </table>
