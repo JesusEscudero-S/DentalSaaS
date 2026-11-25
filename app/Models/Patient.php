@@ -81,6 +81,12 @@ class Patient extends Model
         return $this->hasMany(ConsentAcceptance::class);
     }
 
+    /** Módulo 7: planes de tratamiento (también sirve a scopeBindings de /tratamientos/{plan}). */
+    public function treatmentPlans(): HasMany
+    {
+        return $this->hasMany(TreatmentPlan::class);
+    }
+
     // Atributos calculados
 
     protected function age(): Attribute
